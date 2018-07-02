@@ -1,0 +1,47 @@
+<!--自定义html参考模板-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My</title>
+    <!--使用css,允许外部引用css文件-->
+    <style>
+        .div1 {
+            border: 1px solid red;
+        }
+    </style>
+
+    <!--外部引用css文件-->
+    <link rel="stylesheet" href="/videocontrol/customHtml/test.css">
+
+    <!--使用JavaScript，有且只有一个script标签(不允许外部引用js文件)，多个会解析失败-->
+    <script>
+        //使用内置JQuery
+        var $ = window.$;
+        var flag = true;
+
+        $(function () {
+
+            $("#button").click(function () {
+                if (flag) {
+                    $("#img").attr("src", "/videocontrol/customHtml/apple.jpg");
+                    $("#div").attr("class", "div2");
+                } else {
+                    $("#img").attr("src", "/videocontrol/customHtml/car.jpg");
+                    $("#div").attr("class", "div1");
+                }
+                flag = !flag;
+                console.log($("#img").attr("src"));
+            });
+        });
+    </script>
+</head>
+<body>
+<div id="div" class="div1">
+    <!--引用上传的资源，链接要以/videocontrol/customHtml/开头-->
+    <img id="img" src="/videocontrol/customHtml/car.jpg"/>
+</div>
+<button id="button">切换图片</button>
+
+</body>
+</html>
