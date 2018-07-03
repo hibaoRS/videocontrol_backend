@@ -60,6 +60,28 @@ return array(
         ),
     ),
 
+    //摄像头控制
+    "camera_control" => array(
+        "currCamera" => "1",
+        "1" => array(
+            "focal_length" => 0,
+            "zoom_speed" => 2,
+        ),
+        "2" => array(
+            "focal_length" => 0,
+            "zoom_speed" => 2,
+        ),
+        "3" => array(
+            "focal_length" => 0,
+            "zoom_speed" => 2,
+        ),
+        "4" => array(
+            "focal_length" => 0,
+            "zoom_speed" => 2,
+        ),
+    ),
+
+
     "configs" => array(
         "audio" => array(
             "samplerate" => "48000",
@@ -93,7 +115,12 @@ return array(
         "main_screen" => array(
             "size_type" => "0"
         ),
-
+        "camera" => array(
+            "student_closeUp" => "1",
+            "teacher_closeUp" => "2",
+            "student_panorama" => "3",
+            "teacher_panorama" => "4",
+        )
     ),
 
     /*"video_urls" => $video_urls*/

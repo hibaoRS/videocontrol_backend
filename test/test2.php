@@ -7,4 +7,4 @@
  */
 
 
-echo strval("sfds");
+var_dump(strval("123123"));

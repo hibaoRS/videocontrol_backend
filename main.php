@@ -31,8 +31,6 @@ class main extends controller
 //        $this->qt_ip = CommonUtils::getSystemConfig()["qt_ip"];
 //        $this->videoPath = "D:/environment/Apache24/htdocs/videocontrol/videos/";
         $this->videoPath = "/media/disk/videos/";
-
-
     }
 
 
@@ -806,16 +804,16 @@ class main extends controller
     }
 
 
-    //设置主页控制面板
-    function setMainPanel()
+    //通用设置接口,设置主页控制面板、摄像头控制等
+    function setConfigValue()
     {
-        Validator::notEmpty($_REQUEST, array("key", "val"));
-
+        Validator::notEmpty($_REQUEST, array("key", "val", "configKey"));
+        $configKey = $_REQUEST["configKey"];
         $allConfigs = CommonUtils::readConfig();
-        $mainPanel = $allConfigs->mainPanel;
+        $config = $allConfigs->$configKey;
         $key = $_REQUEST["key"];
-        $mainPanel->$key = $_REQUEST["val"];
-        $allConfigs->mainPanel = $mainPanel;
+        $config->$key = $_REQUEST["val"];
+        $allConfigs->$configKey = $config;
         CommonUtils::writeConfig($allConfigs);
         echo json_encode(Msg::success("操作成功"));
     }
@@ -942,6 +940,7 @@ class main extends controller
         }
     }
 
+    //设置备用url地址
     function setStandByUrl()
     {
         Validator::notEmpty($_REQUEST, array("index"));
@@ -952,8 +951,60 @@ class main extends controller
         $allConfigs->standbyUrls = $standbyUrls;
         CommonUtils::writeConfig($allConfigs);
         echo json_encode(Msg::success("操作成功"));
-
     }
+
+
+    //摄像头控制
+    function cameraControl()
+    {
+        Validator::notEmpty($_REQUEST, array("addr", "cmd", "value"));
+        $response = InteractUtils::socketSendAndRead($this->ip, $this->port, json_encode(
+            array(
+                "type" => "18",
+                "camera" => array(
+                    "addr" => strval($_REQUEST["addr"]),
+                    "cmd" => strval($_REQUEST["cmd"]),
+                    "value" => strval($_REQUEST["value"]),
+                )
+            )
+        ));
+        if (@json_decode($response)->code == 1) {
+            echo json_encode(Msg::success("操作成功"));
+        } else {
+            echo json_encode(Msg::failed("操作失败，请稍后再试"));
+        }
+    }
+
+    //设置摄像头参数
+    function setCameraValue()
+    {
+        Validator::notEmpty($_REQUEST, array("camera", "focal_length", "zoom_speed"));
+        $camera = $_REQUEST["camera"];
+        $focal_length = intval($_REQUEST["focal_length"]);
+        $zoom_speed = intval($_REQUEST["zoom_speed"]);
+        if (intval($camera) < 0 || intval($camera) > 4) {
+            die(json_encode(Msg::failed("camera参数有误")));
+        }
+        if ($focal_length < 0 || $focal_length > 1023) {
+            die(json_encode(Msg::failed("focal_length参数有误")));
+        }
+        if ($zoom_speed < 2 || $zoom_speed > 7) {
+            die(json_encode(Msg::failed("zoom_speed参数有误")));
+        }
+
+
+        $allConfigs = CommonUtils::readConfig();
+        $camera_control = $allConfigs->camera_control;
+
+        $camera_control->$camera->focal_length = $focal_length;
+        $camera_control->$camera->zoom_speed = $zoom_speed;
+
+        $allConfigs->camera_control = $camera_control;
+        CommonUtils::writeConfig($allConfigs);
+        echo json_encode(Msg::success("操作成功"));
+    }
+
+
 }
 
 $main = new main();
