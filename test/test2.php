@@ -6,5 +6,5 @@
  * Time: 12:33
  */
 
-
-var_dump(strval("123123"));
+file_put_contents("./test.txt", "ffd");
+file_put_contents("./test.txt", "sdfsdg");

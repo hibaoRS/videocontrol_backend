@@ -358,8 +358,12 @@ class main extends controller
 // media/disk
     function startRecord()
     {
-        $state = InteractUtils::recordLiveState();
+        //激活判断
+        if ($this->activateState() !== 1) {
+            die(Msg::failed("操作失败，设备未激活"));
+        }
 
+        $state = InteractUtils::recordLiveState();
         if ($state->recording == 0) {
 
             $fp = fopen(__DIR__ . "/configLock", "w+");
@@ -1002,6 +1006,73 @@ class main extends controller
         $allConfigs->camera_control = $camera_control;
         CommonUtils::writeConfig($allConfigs);
         echo json_encode(Msg::success("操作成功"));
+    }
+
+
+    function activate()
+    {
+        if (!array_key_exists("activateCode", $_REQUEST)) {
+            die(json_encode(Msg::failed("激活失败，激活码格式有误")));
+        }
+        $activateCode = $_REQUEST["activateCode"];
+        if (!preg_match("/[0-9A-Z]{8}(-[0-9A-Z]{8}){3}/", $activateCode)) {
+            die(json_encode(Msg::failed("激活失败，激活码格式有误")));
+        }
+        if ($this->isActivate($activateCode)) {
+            file_put_contents("./activationCode.txt", $activateCode);
+            die(json_encode(Msg::success("激活成功，所有功能已开启，感谢使用本产品")));
+        } else {
+            die(json_encode(Msg::failed("激活失败，该激活码无效")));
+        }
+
+    }
+
+    private function isActivate($activateCode)
+    {
+        $salt1 = "HAIBAO";
+        $salt2 = "RECORD";
+        $salt3 = "SYSTEM";
+
+        $productId = $this->getProductKey();
+        $code = strtolower(md5(strtolower($salt1 . $productId)));
+        $code = strtolower(md5(strtolower($code . $salt2)));
+        $code = strtoupper(md5(strtoupper(substr_replace($code, $salt3, 16, 0))));
+        $code = strtoupper(md5($code));
+        $code = substr_replace($code, "-", 24, 0);
+        $code = substr_replace($code, "-", 16, 0);
+        $code = substr_replace($code, "-", 8, 0);
+        return $activateCode == $code;
+    }
+
+
+    function getActivateState()
+    {
+        echo json_encode(Msg::success($this->activateState()));
+    }
+
+    private function activateState()
+    {
+        if ($activateCode = file_get_contents("./activationCode.txt")) {
+            if ($this->isActivate($activateCode)) {
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    private function getProductKey()
+    {
+//        return "3426d560-8832-4469-a70b-74d6a35245ce";
+        $response = InteractUtils::socketSendAndRead($this->ip, $this->port, json_encode(
+            array(
+                "type" => "19"
+            )
+        ));
+        if ($response) {
+            return json_decode($response)->uuid;
+        } else {
+            die(json_encode(Msg::failed("操作失败，请稍后再试")));
+        }
     }
 
 
