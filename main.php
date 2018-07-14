@@ -10,6 +10,7 @@ require "utils/controller.php";
 require "utils/CommonUtils.php";
 require "utils/Validator.php";
 require "utils/InteractUtils.php";
+require "utils/DESUtils.php";
 
 
 class main extends controller
@@ -359,7 +360,7 @@ class main extends controller
     function startRecord()
     {
         //激活判断
-        if ($this->activateState() !== 1) {
+        if ($this->activateState()["activate"] !== 1) {
             die(Msg::failed("操作失败，设备未激活"));
         }
 
@@ -1015,33 +1016,80 @@ class main extends controller
             die(json_encode(Msg::failed("激活失败，激活码格式有误")));
         }
         $activateCode = $_REQUEST["activateCode"];
-        if (!preg_match("/[0-9A-Z]{8}(-[0-9A-Z]{8}){3}/", $activateCode)) {
+        if (!preg_match("/^[0-9A-Z]{48}$/", $activateCode)) {
             die(json_encode(Msg::failed("激活失败，激活码格式有误")));
         }
-        if ($this->isActivate($activateCode)) {
-            file_put_contents("./activationCode.txt", $activateCode);
-            die(json_encode(Msg::success("激活成功，所有功能已开启，感谢使用本产品")));
-        } else {
-            die(json_encode(Msg::failed("激活失败，该激活码无效")));
+        $codePath = "./config/usedCodes.json";
+        $codes = json_decode(file_get_contents($codePath));
+        if (in_array($activateCode, $codes)) {
+            die(json_encode(Msg::failed("激活失败，该激活码已被使用过")));
         }
 
+        $fp = fopen(__DIR__ . "/configLock", "w+");
+        if (flock($fp, LOCK_EX | LOCK_NB)) {
+
+            if ($time = $this->isActivate($activateCode)) {
+                $timePath = "./config/time.json";
+                $configTime = json_decode(file_get_contents($timePath));
+                if ($time == 99) {
+                    $time = 10000;
+                }
+                //增长有效期
+                $addTime = $time * 30.5 * 24 * 60 * 60;
+                if ($configTime->fakeTime < $configTime->expiryTime) {
+                    $configTime->expiryTime = $configTime->expiryTime + $addTime;
+                } //激活
+                else {
+                    $configTime->expiryTime = $configTime->fakeTime + $addTime;
+                }
+                $configTime->activateTime = $configTime->fakeTime;
+                file_put_contents($timePath, json_encode($configTime));
+                array_push($codes, $activateCode);
+                file_put_contents($codePath, json_encode($codes));
+                echo json_encode(Msg::success(array(
+                    "msg" => "激活成功，感谢使用本产品",
+                    "expiryTime" => $configTime->expiryTime,
+                    "activateTime" => $configTime->activateTime,
+                )));
+            } else {
+                echo json_encode(Msg::failed("激活失败，该激活码无效"));
+            }
+
+            flock($fp, LOCK_UN);    // 释放锁定
+        } else {
+            echo json_encode(Msg::failed("激活失败，操作过于频繁"));
+        }
+        fclose($fp);
+
     }
+
 
     private function isActivate($activateCode)
     {
         $salt1 = "HAIBAO";
         $salt2 = "RECORD";
         $salt3 = "SYSTEM";
+        $salt4 = "haibaoLB";
 
-        $productId = $this->getProductKey();
+        $productId = $this->getProductId();
         $code = strtolower(md5(strtolower($salt1 . $productId)));
         $code = strtolower(md5(strtolower($code . $salt2)));
         $code = strtoupper(md5(strtoupper(substr_replace($code, $salt3, 16, 0))));
-        $code = strtoupper(md5($code));
-        $code = substr_replace($code, "-", 24, 0);
-        $code = substr_replace($code, "-", 16, 0);
-        $code = substr_replace($code, "-", 8, 0);
-        return $activateCode == $code;
+        $code = strtoupper(substr(md5($code), 8, 16));
+        $pCode = substr_replace(decrypt(hex2bin($activateCode), $salt4)
+            , "", 0, 1);
+        $pCode = substr_replace($pCode, "", 4, 1);
+        $pCode = substr_replace($pCode, "", 9, 1);
+        $pCode = substr_replace($pCode, "", 13, 1);
+        $pCode = substr_replace($pCode, "", 18, 1);
+        $time = substr($pCode, 8, 2);
+        $pCode = substr_replace($pCode, "", 8, 2);
+        $times = ["01", "03", "06", "12", "24", "36", "60", "99"];
+
+        if ($code == $pCode && in_array($time, $times)) {
+            return intval($time);
+        }
+        return false;
     }
 
 
@@ -1052,15 +1100,16 @@ class main extends controller
 
     private function activateState()
     {
-        if ($activateCode = file_get_contents("./activationCode.txt")) {
-            if ($this->isActivate($activateCode)) {
-                return 1;
-            }
-        }
-        return 0;
+        $configTime = json_decode(file_get_contents("./config/time.json"));
+        return array(
+            "activate" => $configTime->fakeTime < $configTime->expiryTime ? 1 : 0,
+            "expiryTime" => $configTime->expiryTime,
+            "activateTime" => $configTime->activateTime,
+        );
+
     }
 
-    private function getProductKey()
+    private function getProductId()
     {
 //        return "3426d560-8832-4469-a70b-74d6a35245ce";
         $response = InteractUtils::socketSendAndRead($this->ip, $this->port, json_encode(
@@ -1073,6 +1122,34 @@ class main extends controller
         } else {
             die(json_encode(Msg::failed("操作失败，请稍后再试")));
         }
+    }
+
+    function productId()
+    {
+        echo json_encode(Msg::success($this->getProductId()));
+    }
+
+
+    //校准时间（用于激活）
+    function setConfigTime()
+    {
+        Validator::notEmpty($_REQUEST, array("time", "isTrueTime"));
+        $isTrueTime = $_REQUEST["isTrueTime"];
+        $time = intval($_REQUEST["time"]);
+        $timePath = "./config/time.json";
+        $configTime = json_decode(file_get_contents($timePath));
+
+        if ($isTrueTime) {
+            $configTime->trueTime = $time;
+            $configTime->fakeTime = $time;
+        } else {
+            $oldTrueTime = $configTime->trueTime;
+            if ($time > $oldTrueTime && $time < ($oldTrueTime + 60 * 60 * 24 * 30 * 12)) {
+                $configTime->fakeTime = $time;
+            }
+        }
+        file_put_contents($timePath, json_encode($configTime));
+
     }
 
 

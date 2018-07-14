@@ -6,5 +6,4 @@
  * Time: 12:33
  */
 
-file_put_contents("./test.txt", "ffd");
-file_put_contents("./test.txt", "sdfsdg");
+

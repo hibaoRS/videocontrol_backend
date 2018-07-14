@@ -52,16 +52,16 @@ return array(
 
     "serial" => array(
         "camera_serial_dev" => array(
-            "/dev/ttyUSB0" => "/dev/ttyUSB0",
-            "/dev/ttyUSB1" => "/dev/ttyUSB1",
-            "/dev/ttyUSB2" => "/dev/ttyUSB2",
-            "/dev/ttyUSB3" => "/dev/ttyUSB3"
+            "COM2" => "/dev/ttyUSB0",
+            "COM3" => "/dev/ttyUSB1",
+            "COM4" => "/dev/ttyUSB2",
+            "COM5" => "/dev/ttyUSB3",
         ),
         "serial_dev" => array(
-            "/dev/ttyUSB0" => "/dev/ttyUSB0",
-            "/dev/ttyUSB1" => "/dev/ttyUSB1",
-            "/dev/ttyUSB2" => "/dev/ttyUSB2",
-            "/dev/ttyUSB3" => "/dev/ttyUSB3"
+            "COM2" => "/dev/ttyUSB0",
+            "COM3" => "/dev/ttyUSB1",
+            "COM4" => "/dev/ttyUSB2",
+            "COM5" => "/dev/ttyUSB3",
         ),
         "bitrate_type" => array(
             "4800" => "0",
@@ -96,6 +96,18 @@ return array(
             "2" => "2",
             "3" => "3",
             "4" => "4",
+            "5" => "5",
+            "6" => "6",
+            "7" => "7",
+            "8" => "8",
+            "9" => "9",
+            "10" => "10",
+            "11" => "11",
+            "12" => "12",
+            "13" => "13",
+            "14" => "14",
+            "15" => "15",
+            "16" => "16",
         )
     )
 );

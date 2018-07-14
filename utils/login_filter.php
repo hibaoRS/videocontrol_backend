@@ -25,7 +25,9 @@ if ($action != "login" && $_SERVER["REQUEST_METHOD"] != "OPTIONS") {
             }
         }
         if ($bool) {
-            die(json_encode(Msg::failed("请先登录")));
+            if ($action != "reboot" && $action != "powerOff"){
+                die(json_encode(Msg::failed("请先登录")));
+            }
         }
     }
 }

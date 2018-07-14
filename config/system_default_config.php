@@ -79,6 +79,14 @@ return array(
             "focal_length" => 0,
             "zoom_speed" => 2,
         ),
+        "5" => array(
+            "focal_length" => 0,
+            "zoom_speed" => 2,
+        ),
+        "6" => array(
+            "focal_length" => 0,
+            "zoom_speed" => 2,
+        ),
     ),
 
 
@@ -120,6 +128,8 @@ return array(
             "teacher_closeUp" => "2",
             "student_panorama" => "3",
             "teacher_panorama" => "4",
+            "board_closeUp" => "5",
+            "custom" => "6",
         )
     ),
 
