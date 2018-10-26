@@ -10,11 +10,11 @@
 class Validator
 {
 
-    static function notEmpty($array, $keys, $msgs = array())
+    static function notEmpty($keys, $msgs = array())
     {
         $errors = array();
         foreach ($keys as $key) {
-            if (!array_key_exists($key, $array) || trim($array[$key]) == "") {
+            if (!array_key_exists($key, $_REQUEST) || trim($_REQUEST[$key]) == "") {
                 $msg = "不能为空";
                 if (array_key_exists($key, $msgs)) {
                     $msg = $msgs[$key] . $msg;

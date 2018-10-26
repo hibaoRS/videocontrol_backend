@@ -8,6 +8,7 @@
 
 require __DIR__ . "/../utils/CommonUtils.php";
 
+error_reporting(0);
 
 //初始化设置直播ip
 //$video_urls = array();
@@ -23,18 +24,22 @@ require __DIR__ . "/../utils/CommonUtils.php";
 //CommonUtils::writeConfig($allConfigs);
 
 //设置ip
+$runTimeConfig=CommonUtils::readConfig();
 if (PHP_OS == "Linux") {
-    foreach (CommonUtils::readConfig()->ips as $dev => $ipInfo) {
+    foreach ($runTimeConfig->ips as $dev => $ipInfo) {
+//        echo "ifconfig '$dev' '$ipInfo->ip' netmask '$ipInfo->mask'";
         exec("ifconfig '$dev' '$ipInfo->ip' netmask '$ipInfo->mask'", $result, $code);
     }
 }
 
-
 //初始化录制状态
 CommonUtils::initRecordLiveState();
 
+//发送开机请求
+CommonUtils::boot();
 
-error_reporting(0);
+
+
 
 $address = CommonUtils::getSystemConfig()["my_ip"];
 //$address = "192.168.1.101";

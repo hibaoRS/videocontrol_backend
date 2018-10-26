@@ -10,7 +10,7 @@ require "utils/controller.php";
 require "utils/CommonUtils.php";
 require "utils/Validator.php";
 require "utils/InteractUtils.php";
-require "utils/DESUtils.php";
+require "utils/Des.php";
 
 
 class main extends controller
@@ -22,16 +22,22 @@ class main extends controller
 //    private $qt_port;
     private $videoPath;
 
+    private $des;
+
 
     public function __construct()
     {
+
+        $this->des = new Des();
 
         $this->ip = CommonUtils::getSystemConfig()["ip"];
         $this->port = CommonUtils::getSystemConfig()["port"];
 //        $this->qt_port = CommonUtils::getSystemConfig()["qt_port"];
 //        $this->qt_ip = CommonUtils::getSystemConfig()["qt_ip"];
 //        $this->videoPath = "D:/environment/Apache24/htdocs/videocontrol/videos/";
+        //TODO 修改
         $this->videoPath = "/media/disk/videos/";
+//        $this->videoPath = "/mnt/d/environment/Apache24/htdocs/videos/";
     }
 
 
@@ -153,30 +159,37 @@ class main extends controller
         $dir = opendir($this->videoPath);
         $data = array();
         $key = 0;
+        //ftp配置
+        $otherConfigs = CommonUtils::readConfig()->configs->other;
+        $ftpConfig = $otherConfigs->ftp;
+        $serial_number = $otherConfigs->interact_live->serial_number;
         while (($folderName = readdir($dir)) != false) {
-
             if ($folderName == "." || $folderName == "..") {
                 continue;
             }
-
             $folderPath = $this->videoPath . $folderName;
             if (filetype($folderPath) == "dir") {
                 $secondDir = opendir($folderPath);
+                //ftp文件夹是否存在
+                $folderExist = $this->ftpFileExist($ftpConfig, $serial_number, $folderName . "/");
                 $children = array();
                 while (($fileName = readdir($secondDir)) != false) {
                     if (strtolower(substr(trim($fileName), -4)) === ".mp4") {
+                        $relativePath = $folderName . "/" . $fileName;
                         array_push($children, array(
                             "key" => $key,
                             "name" => $fileName,
-                            "relativePath" => $folderName . "/" . $fileName,
-                            "type" => 1
+                            "relativePath" => $relativePath,
+                            "type" => 1,
+                            "size" => $this->sizeAddUnit(filesize($this->videoPath . $relativePath)),
+                            //ftp文件是否存在
+                            "exist" => $folderExist ? $this->ftpFileExist($ftpConfig, $serial_number, $relativePath) : $folderExist
                         ));
                         $key++;
                     }
                 }
-
                 closedir($secondDir);
-
+                //是否有子文件
                 if (!empty($children)) {
                     array_push($data, array(
                         "key" => $key,
@@ -197,9 +210,46 @@ class main extends controller
             }
 
         }
-
         closedir($dir);
         echo json_encode(Msg::success($data));
+    }
+
+
+    private function sizeAddUnit($byte)
+    {
+        if ($byte < 1024) {
+            $unit = "B";
+        } else if ($byte < 10240) {
+            $byte = $this->round_dp($byte / 1024, 2);
+            $unit = "KB";
+        } else if ($byte < 102400) {
+            $byte = $this->round_dp($byte / 1024, 2);
+            $unit = "KB";
+        } else if ($byte < 1048576) {
+            $byte = $this->round_dp($byte / 1024, 2);
+            $unit = "KB";
+        } else if ($byte < 10485760) {
+            $byte = $this->round_dp($byte / 1048576, 2);
+            $unit = "MB";
+        } else if ($byte < 104857600) {
+            $byte = $this->round_dp($byte / 1048576, 2);
+            $unit = "MB";
+        } else if ($byte < 1073741824) {
+            $byte = $this->round_dp($byte / 1048576, 2);
+            $unit = "MB";
+        } else {
+            $byte = $this->round_dp($byte / 1073741824, 2);
+            $unit = "GB";
+        }
+
+        $byte .= $unit;
+        return $byte;
+    }
+
+    private function round_dp($num, $dp)
+    {
+        $sh = pow(10, $dp);
+        return (round($num * $sh) / $sh);
     }
 
     private function my_sort($arrays, $sort_key, $sort_order = SORT_ASC, $sort_type = SORT_NUMERIC)
@@ -220,6 +270,7 @@ class main extends controller
     }
 
 
+    //修改设置
     function setConfig()
     {
 
@@ -231,7 +282,7 @@ class main extends controller
 
         $fp = fopen(__DIR__ . "/configLock", "w+");
         if (flock($fp, LOCK_EX | LOCK_NB)) {
-            Validator::notEmpty($_REQUEST, array("configs"));
+            Validator::notEmpty(array("configs"));
             $configs = json_decode($_REQUEST["configs"]);
             $allConfigs = CommonUtils::readConfig();
             if (InteractUtils::checkAndSendConfig($allConfigs->configs, $configs)) {
@@ -253,7 +304,6 @@ class main extends controller
 
     function reStoreDefault()
     {
-
         $state = InteractUtils::recordLiveState();
         if ($state->recording == 1) {
             die(json_encode(Msg::failed("操作失败，在恢复默认配置之前，请先停止录制")));
@@ -279,7 +329,7 @@ class main extends controller
 
     function setRecordConfig()
     {
-        Validator::notEmpty($_REQUEST, array("key", "value"));
+        Validator::notEmpty(array("key", "value"));
 
         $key = $_REQUEST["key"];
         $value = $_REQUEST["value"];
@@ -458,6 +508,7 @@ class main extends controller
                         "living" => 1,
                         "liveTime" => floatval($_REQUEST["time"])
                     ));
+                    CommonUtils::live(1);
                     echo json_encode(Msg::success("操作成功"));
                 } else {
                     echo json_encode(Msg::failed("开始直播失败，请重启系统"));
@@ -486,6 +537,7 @@ class main extends controller
                     CommonUtils::saveRecordLiveState(array(
                         "living" => 0
                     ));
+                    CommonUtils::live(0);
                     echo json_encode(Msg::success("操作成功"));
                 } else {
                     echo json_encode(Msg::failed("停止直播失败，请重启系统"));
@@ -576,7 +628,7 @@ class main extends controller
 
     function changeLayout()
     {
-        Validator::notEmpty($_REQUEST, array("data"));
+        Validator::notEmpty(array("data"));
         $response = InteractUtils::socketSendAndRead($this->ip, $this->port, $_REQUEST["data"]);
         if (json_decode($response)->code == 1) {
             echo json_encode(Msg::success("操作成功"));
@@ -589,7 +641,7 @@ class main extends controller
     function switchMain()
     {
         if (InteractUtils::recordLiveState()->autoSwitch != 1) {
-            Validator::notEmpty($_REQUEST, array("chn"));
+            Validator::notEmpty(array("chn"));
 
             $chn = $_REQUEST["chn"];
             if ($chn > 5 ||
@@ -625,7 +677,7 @@ class main extends controller
 
         $fp = fopen(__DIR__ . "/configLock", "w+");
         if (flock($fp, LOCK_EX | LOCK_NB)) {
-            Validator::notEmpty($_REQUEST, array("second_dir"));
+            Validator::notEmpty(array("second_dir"));
             $allConfigs = CommonUtils::readConfig();
             $configs = $allConfigs->configs;
             $record = $configs->record;
@@ -651,7 +703,7 @@ class main extends controller
         }
         $fp = fopen(__DIR__ . "/configLock", "w+");
         if (flock($fp, LOCK_EX | LOCK_NB)) {
-            Validator::notEmpty($_REQUEST, array("name"));
+            Validator::notEmpty(array("name"));
             $allConfigs = CommonUtils::readConfig();
             $allConfigs->recordName = $_REQUEST["name"];
             CommonUtils::writeConfig($allConfigs);
@@ -685,7 +737,7 @@ class main extends controller
 
     function setLayout()
     {
-        Validator::notEmpty($_REQUEST, array("layout_name"));
+        Validator::notEmpty(array("layout_name"));
         $allConfig = CommonUtils::readConfig();
         $allConfig->layout = $_REQUEST["layout_name"];
         CommonUtils::writeConfig($allConfig);
@@ -695,7 +747,7 @@ class main extends controller
 
     /**function setIp()
      * {
-     * Validator::notEmpty($_REQUEST, array("name", "ip"));
+     * Validator::notEmpty( array("name", "ip"));
      * $allConfigs = CommonUtils::readConfig();
      * $video_urls = $allConfigs->video_urls;
      * $ip = $_REQUEST["ip"];
@@ -812,7 +864,7 @@ class main extends controller
     //通用设置接口,设置主页控制面板、摄像头控制等
     function setConfigValue()
     {
-        Validator::notEmpty($_REQUEST, array("key", "val", "configKey"));
+        Validator::notEmpty(array("key", "val", "configKey"));
         $configKey = $_REQUEST["configKey"];
         $allConfigs = CommonUtils::readConfig();
         $config = $allConfigs->$configKey;
@@ -920,7 +972,7 @@ class main extends controller
 
     function initLiveTime()
     {
-        Validator::notEmpty($_REQUEST, array("time"));
+        Validator::notEmpty(array("time"));
         CommonUtils::saveRecordLiveState(array(
             "liveTime" => floatval($_REQUEST["time"])
         ));
@@ -948,7 +1000,7 @@ class main extends controller
     //设置备用url地址
     function setStandByUrl()
     {
-        Validator::notEmpty($_REQUEST, array("index"));
+        Validator::notEmpty(array("index"));
 
         $allConfigs = CommonUtils::readConfig();
         $standbyUrls = $allConfigs->standbyUrls;
@@ -962,7 +1014,7 @@ class main extends controller
     //摄像头控制
     function cameraControl()
     {
-        Validator::notEmpty($_REQUEST, array("addr", "cmd", "value"));
+        Validator::notEmpty(array("addr", "cmd", "value"));
         $response = InteractUtils::socketSendAndRead($this->ip, $this->port, json_encode(
             array(
                 "type" => "18",
@@ -983,7 +1035,7 @@ class main extends controller
     //设置摄像头参数
     function setCameraValue()
     {
-        Validator::notEmpty($_REQUEST, array("camera", "focal_length", "zoom_speed"));
+        Validator::notEmpty(array("camera", "focal_length", "zoom_speed"));
         $camera = $_REQUEST["camera"];
         $focal_length = intval($_REQUEST["focal_length"]);
         $zoom_speed = intval($_REQUEST["zoom_speed"]);
@@ -1076,7 +1128,7 @@ class main extends controller
         $code = strtolower(md5(strtolower($code . $salt2)));
         $code = strtoupper(md5(strtoupper(substr_replace($code, $salt3, 16, 0))));
         $code = strtoupper(substr(md5($code), 8, 16));
-        $pCode = substr_replace(decrypt(hex2bin($activateCode), $salt4)
+        $pCode = substr_replace($this->des->decrypt(hex2bin($activateCode), $salt4)
             , "", 0, 1);
         $pCode = substr_replace($pCode, "", 4, 1);
         $pCode = substr_replace($pCode, "", 9, 1);
@@ -1133,7 +1185,7 @@ class main extends controller
     //校准时间（用于激活）
     function setConfigTime()
     {
-        Validator::notEmpty($_REQUEST, array("time", "isTrueTime"));
+        Validator::notEmpty(array("time", "isTrueTime"));
         $isTrueTime = $_REQUEST["isTrueTime"];
         $time = intval($_REQUEST["time"]);
         $timePath = "./config/time.json";
@@ -1149,7 +1201,121 @@ class main extends controller
             }
         }
         file_put_contents($timePath, json_encode($configTime));
+    }
 
+
+
+    //FTP和互动直播
+    //视频封面上传
+    function setVideoCover()
+    {
+        if (strtoupper($_SERVER['REQUEST_METHOD']) == "OPTIONS") {
+            header("access-control-allow-headers: authorization,x-requested-with");
+            header("access-control-allow-methods: GET,HEAD,PUT,PATCH,POST,DELETE");
+            http_response_code("204");
+            return;
+        }
+        if (PHP_OS == "Linux") {
+            $rootPath = __DIR__ . DIRECTORY_SEPARATOR;
+            //上传校验
+            if (!array_key_exists("file", $_FILES)) {
+                die(json_encode(Msg::failed("参数有误")));
+            }
+            $file = $_FILES["file"];
+            //上传文件
+            $relativePath = "static/video_cover.jpg";
+            $filePath = $rootPath . $relativePath;
+            if (file_exists($filePath)) {
+                unlink($filePath);
+            }
+            move_uploaded_file($file["tmp_name"], $filePath);
+            $allConfigs = CommonUtils::readConfig();
+            $allConfigs->configs->other->interact_live->picAddress = $relativePath;
+            CommonUtils::writeConfig($allConfigs);
+            //上传封面到ftp服务器
+            $otherConfig = CommonUtils::readConfig()->configs->other;
+            $ftpConfig = $otherConfig->ftp;
+            $serial_number = $otherConfig->interact_live->serial_number;
+            exec("curl  --ftp-create-dirs -T '$filePath'"
+                . " '$ftpConfig->server/$relativePath'"
+                . " -u $ftpConfig->user:$ftpConfig->password");
+            echo json_encode(Msg::success($relativePath));
+        } else {
+            echo json_encode(Msg::failed("操作失败，服务器端非Linux系统"));
+        }
+
+    }
+
+
+    function ftpFileExist($ftpConfig, $serial_number, $path, $timeOut = 0.5)
+    {
+
+        $ftpServer = str_replace("ftp://", "", strtolower($ftpConfig->server));
+        $cmd = "curl -I 'http://$ftpServer:$ftpConfig->on_demand_port/ftp/$serial_number/$path' -r 0-1 --connect-timeout $timeOut -m $timeOut";
+        exec($cmd, $myTemp, $result);
+        if (!$result && !strstr($myTemp[0], "404")) {
+            return true;
+        }
+        return false;
+    }
+
+
+    //ftp上传
+    function ftpUpload()
+    {
+        Validator::notEmpty(array("relativePath"));
+        $relativePath = $_REQUEST["relativePath"];
+        $otherConfig = CommonUtils::readConfig()->configs->other;
+        $ftpConfig = $otherConfig->ftp;
+        $serial_number = $otherConfig->interact_live->serial_number;
+
+        //写入正在上传的文件信息到配置文件
+        $ftpFileNamePath = __DIR__ . "/runtime/ftpFileName.txt";
+        $logPath = __DIR__ . "/runtime/ftpStatus.txt";
+
+        $content = explode("\r", file_get_contents($logPath));
+        $content = explode(" ", $content[sizeof($content) - 1])[0];
+        if ($content !== "100") {
+            die(json_encode(Msg::failed("有其他视频文件正在上传，请稍后再试")));
+        }
+        //检查文件是否已存在
+        if ($this->ftpFileExist($ftpConfig, $serial_number, $relativePath, 1)) {
+            die(json_encode(Msg::failed("该视频文件上传中或已上传，请勿重复操作")));
+        }
+        file_put_contents($ftpFileNamePath, $relativePath);
+        //上传文件
+        exec("curl  --ftp-create-dirs -T '$this->videoPath/$relativePath'"
+            . " '$ftpConfig->server/$serial_number/$relativePath'"
+            . " -u $ftpConfig->user:$ftpConfig->password > /dev/null  2>$logPath &");
+        CommonUtils::upload($relativePath);
+        echo json_encode(Msg::success("视频文件开始从后台上传..."));
+
+    }
+
+
+    function login()
+    {
+        CommonUtils::upload("12312selkdgj sdgsdg ljl/lkjkg test sdkljgklsd saklfj");
+    }
+
+    function ftpStatus()
+    {
+        $content = explode("\r", file_get_contents(__DIR__ . "/runtime/ftpStatus.txt"));
+        $arr = explode(" ", $content[sizeof($content) - 1]);
+        $result = array();
+        foreach ($arr as $value) {
+            if (trim($value) !== "") {
+                array_push($result, str_replace("\n", "", $value));
+            }
+        }
+        if (sizeof($result) == 12) {
+            echo json_encode(Msg::success(array(
+                "relativePath" => file_get_contents(__DIR__ . "/runtime/ftpFileName.txt"),
+                "status" => $result,
+            )));;
+        } else {
+            echo json_encode(Msg::failed());;
+        }
     }
 
 

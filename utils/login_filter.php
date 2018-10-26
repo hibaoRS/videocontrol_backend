@@ -6,7 +6,6 @@
  * Time: 10:31
  */
 
-
 require __DIR__ . "/../dao/ManagerDao.php";
 require __DIR__ . "/headers.php";
 $managerDao = new ManagerDao();
@@ -25,7 +24,7 @@ if ($action != "login" && $_SERVER["REQUEST_METHOD"] != "OPTIONS") {
             }
         }
         if ($bool) {
-            if ($action != "reboot" && $action != "powerOff"){
+            if ($action != "reboot" && $action != "powerOff") {
                 die(json_encode(Msg::failed("请先登录")));
             }
         }

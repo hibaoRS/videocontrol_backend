@@ -122,7 +122,7 @@ class other
 
     function setIp()
     {
-        Validator::notEmpty($_REQUEST, array("dev", "ip", "mask", "gateway"));
+        Validator::notEmpty( array("dev", "ip", "mask", "gateway"));
 
         $dev = $_REQUEST["dev"];
         $ip = $_REQUEST["ip"];
@@ -191,7 +191,7 @@ class other
     function setTime()
     {
 
-        Validator::notEmpty($_REQUEST, array("datetime"));
+        Validator::notEmpty( array("datetime"));
         $datetime = $_REQUEST["datetime"];
         exec("date -s '$datetime'", $result, $code);
         if ($code != 0) {

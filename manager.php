@@ -35,7 +35,7 @@ class manager extends controller
 
     function login()
     {
-        Validator::notEmpty($_REQUEST, array("name", "password"));
+        Validator::notEmpty( array("name", "password"));
 
         if ($result = $this->managerDao->login($_REQUEST["name"], $_REQUEST["password"])) {
             $_SESSION["manager"] = $result;
@@ -62,7 +62,7 @@ class manager extends controller
         if($_SESSION["manager"]["type"]==0){
             die(json_encode(Msg::failed("非法操作")));
         }
-        Validator::notEmpty($_REQUEST, array("name", "password"));
+        Validator::notEmpty( array("name", "password"));
         if ($this->managerDao->exists($_REQUEST["name"])) {
             die(json_encode(Msg::failed("操作失败，该管理员已存在")));
         }
@@ -81,7 +81,7 @@ class manager extends controller
 
     function delete()
     {
-        Validator::notEmpty($_REQUEST, array("id"));
+        Validator::notEmpty( array("id"));
 
         if($_SESSION["manager"]["type"]==0){
             die(json_encode(Msg::failed("非法操作")));
@@ -101,7 +101,7 @@ class manager extends controller
 
     function update()
     {
-        Validator::notEmpty($_REQUEST, array("id", "name", "password"));
+        Validator::notEmpty( array("id", "name", "password"));
         if(!key_exists("oldPassword",$_REQUEST)){
             die(json_encode(Msg::failed("旧密码不能为空")));
         }

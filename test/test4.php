@@ -6,7 +6,7 @@
  * Time: 12:33
  */
 
-
+//加密测试
 function encrypt($str, $key)
 {
     $block = mcrypt_get_block_size('des', 'ecb');
@@ -15,6 +15,7 @@ function encrypt($str, $key)
 
     return mcrypt_encrypt(MCRYPT_DES, $key, $str, MCRYPT_MODE_ECB);
 }
+
 
 function decrypt($str, $key)
 {

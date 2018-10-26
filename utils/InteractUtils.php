@@ -31,7 +31,6 @@ class InteractUtils
             $sendData = array("type" => "1", "video" => $newConfigs->video);
             $response = self::socketSendAndRead($ip, $port, json_encode($sendData));
             if ($response == false || json_decode($response)->code != 1) {
-
                 return false;
             }
 
@@ -81,9 +80,9 @@ class InteractUtils
         }
 
         //设置socket超时时间
-        //设置socket 发送超时1秒，接收超时3秒：
-        socket_set_option($socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 3, "usec" => 0));
-        socket_set_option($socket, SOL_SOCKET, SO_SNDTIMEO, array("sec" => 3, "usec" => 0));
+        //设置socket 发送超时10秒，接收超时10秒：
+        socket_set_option($socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 10, "usec" => 0));
+        socket_set_option($socket, SOL_SOCKET, SO_SNDTIMEO, array("sec" => 10, "usec" => 0));
 
         if (($result = @socket_connect($socket, $ip, $port)) == false) {
             socket_close($socket);

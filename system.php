@@ -23,7 +23,7 @@ class system extends controller
     function getInfo()
     {
         if (PHP_OS == "Linux") {
-            Validator::notEmpty($_REQUEST, array("command"));
+            Validator::notEmpty( array("command"));
             $command = $_REQUEST["command"];
 
             if ($result = InteractUtils::socketSendAndRead($this->qt_ip, $this->qt_port, $command)) {

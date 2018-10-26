@@ -130,6 +130,24 @@ return array(
             "teacher_panorama" => "4",
             "board_closeUp" => "5",
             "custom" => "6",
+        ),
+        //ftp和互动直播
+        "other"=>array(
+            "ftp"=>array(
+                "server" => "ftp://58.67.222.35",
+                "port" => "21",
+                "user" => "vision_ftp",
+                "password" => "vision_upload",
+                "on_demand_port"=>"8085",
+            ),
+            "interact_live"=>array(
+                "serial_number"=>"",
+                "class_room_name"=>"",
+                "ip_address"=>"",
+                "picAddress"=>"static/video_cover_default.jpg",
+                "resource_platform_ip"=>"58.67.222.35",
+                "resource_platform_port"=>"9000",
+            )
         )
     ),
 

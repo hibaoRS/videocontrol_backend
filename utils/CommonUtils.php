@@ -6,11 +6,10 @@
  * Time: 10:25
  */
 
-
 class CommonUtils
 {
     /**
-     * @return array
+     * @return object
      */
     static function readConfig()
     {
@@ -48,9 +47,16 @@ class CommonUtils
 
     static function writeToSystem($configs)
     {
+        //去除不需交互的字段
+        if (is_object($configs)) {
+            unset($configs->other);
+        } else if (is_array($configs)) {
+            unset($configs["other"]);
+        }
+
         if (PHP_OS != "WINNT") {
             $runtimeConfigPath = "/nand/conf/init.json";
-            if(!file_exists("/nand/conf")){
+            if (!file_exists("/nand/conf")) {
                 mkdir("/nand/conf");
             }
             file_put_contents($runtimeConfigPath, json_encode($configs, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
@@ -94,8 +100,89 @@ class CommonUtils
         $path = __DIR__ . "/../config/recordLiveState.json";
         file_put_contents($path,
             json_encode(
-                array_merge(json_decode(file_get_contents($path),true), $state)
+                array_merge(json_decode(file_get_contents($path), true), $state)
                 , JSON_NUMERIC_CHECK));
     }
 
+
+    static function str_has_empty()
+    {
+        $args = func_get_args();
+        foreach ($args as $arg) {
+            if ($arg === null || trim($arg) === "") {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static function send_get($url)
+    {
+        $wgetLogPath = __DIR__ . "/../runtime/wgetLog.txt";
+        exec("wget -O $wgetLogPath '$url'");
+        exec("cat $wgetLogPath", $result);
+        return $result;
+    }
+
+    static function validateConfig($liveConfig)
+    {
+        if (self::str_has_empty(
+            $liveConfig->serial_number,
+            $liveConfig->class_room_name,
+            $liveConfig->resource_platform_ip,
+            $liveConfig->resource_platform_port,
+            $liveConfig->ip_address
+        )) {
+            return false;
+        }
+        return "http://$liveConfig->resource_platform_ip:$liveConfig->resource_platform_port"
+            . "/web/live?serial_number=$liveConfig->serial_number";
+    }
+
+
+    //互动直播
+    //调用录播主机启动接口
+    static function boot()
+    {
+        $configs = self::readConfig()->configs;
+        $liveConfig = $configs->other->interact_live;
+        $rtmpServer = $configs->rtmp->server_url;
+        if (!$urlPrefix = self::validateConfig($liveConfig)) {
+            return false;
+        }
+        return self::send_get($urlPrefix . "&a=setting&class_room_name=$liveConfig->class_room_name"
+                . "&ip_address=$liveConfig->ip_address&rtmp_direct_sending_address=$rtmpServer/0") == "successed";
+    }
+
+
+    //调用开启或关闭直播接口
+    static function live($status)
+    {
+        $configs = self::readConfig()->configs;
+        $liveConfig = $configs->other->interact_live;
+        if (!$urlPrefix = self::validateConfig($liveConfig)) {
+            return false;
+        }
+        return self::send_get($urlPrefix . "&a=setting&direct_status=$status") == "successed";
+    }
+
+    //提交资源平台
+    static function upload($video)
+    {
+        $configs = self::readConfig()->configs;
+        $liveConfig = $configs->other->interact_live;
+        $ftpConfig = $configs->other->ftp;
+        $ftpServer = $ftpConfig->server;
+        $ftpServer = str_replace("ftp://", "", strtolower($ftpServer));
+        if (!$urlPrefix = self::validateConfig($liveConfig)) {
+            return false;
+        }
+        return self::send_get($urlPrefix . "&a=saveVideo&date=" . date("Y-m-d H:i:s")
+                . "&picAddress=http://$ftpServer:$ftpConfig->on_demand_port/ftp/static/video_cover.jpg"
+                . "&videoAddress=http://$ftpServer:$ftpConfig->on_demand_port/ftp/$liveConfig->serial_number/$video")
+            == "successed";
+    }
+
+
 }
+
