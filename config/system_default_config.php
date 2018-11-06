@@ -18,6 +18,17 @@ for ($i = 6; $i >= 0; $i--) {
 
 }
 
+
+$response = InteractUtils::socketSendAndRead(CommonUtils::getSystemConfig()["ip"], CommonUtils::getSystemConfig()["port"], json_encode(
+    array(
+        "type" => "19"
+    )
+));
+$productId = "";
+if ($response) {
+    $productId = json_decode($response)->uuid;
+}
+
 return array(
     //当前布局
     "layout" => "layout_default",
@@ -132,21 +143,21 @@ return array(
             "custom" => "6",
         ),
         //ftp和互动直播
-        "other"=>array(
-            "ftp"=>array(
+        "other" => array(
+            "ftp" => array(
                 "server" => "ftp://58.67.222.35",
                 "port" => "21",
                 "user" => "vision_ftp",
                 "password" => "vision_upload",
-                "on_demand_port"=>"8085",
+                "on_demand_port" => "8085",
             ),
-            "interact_live"=>array(
-                "serial_number"=>"",
-                "class_room_name"=>"",
-                "ip_address"=>"",
-                "picAddress"=>"static/video_cover_default.jpg",
-                "resource_platform_ip"=>"58.67.222.35",
-                "resource_platform_port"=>"9000",
+            "interact_live" => array(
+                "serial_number" => $productId,
+                "class_room_name" => "",
+                "ip_address" => "",
+                "picAddress" => "static/video_cover_default.jpg",
+                "resource_platform_ip" => "58.67.222.35",
+                "resource_platform_port" => "8080",
             )
         )
     ),

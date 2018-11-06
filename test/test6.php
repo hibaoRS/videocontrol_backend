@@ -1,3 +1,3 @@
 <?php
 
-echo date("Y-m-d H:i:s",time()-10*60);
+var_dump("0.11213145" > "0.123");

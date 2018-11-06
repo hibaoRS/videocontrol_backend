@@ -38,7 +38,8 @@ CommonUtils::initRecordLiveState();
 //发送开机请求
 CommonUtils::boot();
 
-
+file_put_contents(__DIR__ . "/../runtime/ftpFileName.txt", "");
+file_put_contents(__DIR__ . "/../runtime/ftpStatus.txt", "");
 
 
 $address = CommonUtils::getSystemConfig()["my_ip"];

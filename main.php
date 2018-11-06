@@ -21,9 +21,8 @@ class main extends controller
 //    private $qt_ip;
 //    private $qt_port;
     private $videoPath;
-
     private $des;
-
+    private $curl;
 
     public function __construct()
     {
@@ -34,10 +33,12 @@ class main extends controller
         $this->port = CommonUtils::getSystemConfig()["port"];
 //        $this->qt_port = CommonUtils::getSystemConfig()["qt_port"];
 //        $this->qt_ip = CommonUtils::getSystemConfig()["qt_ip"];
-//        $this->videoPath = "D:/environment/Apache24/htdocs/videocontrol/videos/";
-        //TODO 修改
+        //        $this->videoPath = "D:/environment/Apache24/htdocs/videocontrol/videos/";
         $this->videoPath = "/media/disk/videos/";
+        $this->curl = "export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/nand/lib;/nand/curl-7.61.1/arm/bin/curl ";
+//        $this->curl = "curl";
 //        $this->videoPath = "/mnt/d/environment/Apache24/htdocs/videos/";
+
     }
 
 
@@ -285,10 +286,20 @@ class main extends controller
             Validator::notEmpty(array("configs"));
             $configs = json_decode($_REQUEST["configs"]);
             $allConfigs = CommonUtils::readConfig();
-            if (InteractUtils::checkAndSendConfig($allConfigs->configs, $configs)) {
+            $oldConfigs = $allConfigs->configs;
+            if (InteractUtils::checkAndSendConfig($oldConfigs, $configs)) {
+                //修改互动直播配置，重新发送开机请求
+                $needBoot = false;
+                if ($oldConfigs->other->interact_live != $configs->other->interact_live
+                    || $oldConfigs->rtmp != $configs->rtmp) {
+                    $needBoot = true;
+                }
                 $allConfigs->configs = $configs;
                 CommonUtils::writeConfig($allConfigs);
                 CommonUtils::writeToSystem($allConfigs->configs);
+                if ($needBoot) {
+                    CommonUtils::boot();
+                }
                 echo json_encode(Msg::success("操作成功"));
             } else {
                 echo json_encode(Msg::failed("操作失败，请重启设备或稍后再试"));
@@ -1236,7 +1247,7 @@ class main extends controller
             $otherConfig = CommonUtils::readConfig()->configs->other;
             $ftpConfig = $otherConfig->ftp;
             $serial_number = $otherConfig->interact_live->serial_number;
-            exec("curl  --ftp-create-dirs -T '$filePath'"
+            exec("$this->curl  --ftp-create-dirs -T '$filePath'"
                 . " '$ftpConfig->server/$relativePath'"
                 . " -u $ftpConfig->user:$ftpConfig->password");
             echo json_encode(Msg::success($relativePath));
@@ -1251,7 +1262,7 @@ class main extends controller
     {
 
         $ftpServer = str_replace("ftp://", "", strtolower($ftpConfig->server));
-        $cmd = "curl -I 'http://$ftpServer:$ftpConfig->on_demand_port/ftp/$serial_number/$path' -r 0-1 --connect-timeout $timeOut -m $timeOut";
+        $cmd = "$this->curl -I 'http://$ftpServer:$ftpConfig->on_demand_port/ftp/$serial_number/$path' -r 0-1 --connect-timeout $timeOut -m $timeOut";
         exec($cmd, $myTemp, $result);
         if (!$result && !strstr($myTemp[0], "404")) {
             return true;
@@ -1273,9 +1284,10 @@ class main extends controller
         $ftpFileNamePath = __DIR__ . "/runtime/ftpFileName.txt";
         $logPath = __DIR__ . "/runtime/ftpStatus.txt";
 
-        $content = explode("\r", file_get_contents($logPath));
+        $log = file_get_contents($logPath);
+        $content = explode("\r", $log);
         $content = explode(" ", $content[sizeof($content) - 1])[0];
-        if ($content !== "100") {
+        if (is_numeric($content) && $content !== "100" && trim($log) != "") {
             die(json_encode(Msg::failed("有其他视频文件正在上传，请稍后再试")));
         }
         //检查文件是否已存在
@@ -1284,7 +1296,7 @@ class main extends controller
         }
         file_put_contents($ftpFileNamePath, $relativePath);
         //上传文件
-        exec("curl  --ftp-create-dirs -T '$this->videoPath/$relativePath'"
+        exec("$this->curl  --ftp-create-dirs -T '$this->videoPath$relativePath'"
             . " '$ftpConfig->server/$serial_number/$relativePath'"
             . " -u $ftpConfig->user:$ftpConfig->password > /dev/null  2>$logPath &");
         CommonUtils::upload($relativePath);
@@ -1316,6 +1328,11 @@ class main extends controller
         } else {
             echo json_encode(Msg::failed());;
         }
+    }
+
+    function softwareVersion()
+    {
+        echo json_encode(Msg::success(file_get_contents(__DIR__ . "/update/version.txt")));
     }
 
 

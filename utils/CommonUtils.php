@@ -118,11 +118,35 @@ class CommonUtils
 
     static function send_get($url)
     {
-        $wgetLogPath = __DIR__ . "/../runtime/wgetLog.txt";
-        exec("wget -O $wgetLogPath '$url'");
-        exec("cat $wgetLogPath", $result);
+        $curl = "export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/nand/lib;/nand/curl-7.61.1/arm/bin/curl ";
+        $url = self::encode_url($url);
+        exec("$curl '$url'", $result, $code);
         return $result;
     }
+
+    private static function encode_url($url)
+    {
+        $pos = strpos($url, "?");
+        if($pos===false){
+            return  $url;
+        }
+        $pos=$pos+1;
+        $uri = substr($url, 0, $pos);
+        $params = substr($url, $pos);
+        $paramsArr = explode("&", $params);
+        foreach ($paramsArr as $param) {
+            if (trim($param) == "") continue;
+            $keyPos = strpos($param, "=") + 1;
+            if ($keyPos!==false) {
+                $uri .= urlencode($param);
+            } else {
+                $uri .= substr($param, 0, $keyPos) . urlencode(substr($param, $keyPos));
+            }
+            $uri .= "&";
+        }
+        return $uri;
+    }
+
 
     static function validateConfig($liveConfig)
     {
@@ -140,8 +164,8 @@ class CommonUtils
     }
 
 
-    //互动直播
-    //调用录播主机启动接口
+//互动直播
+//调用录播主机启动接口
     static function boot()
     {
         $configs = self::readConfig()->configs;
@@ -155,7 +179,7 @@ class CommonUtils
     }
 
 
-    //调用开启或关闭直播接口
+//调用开启或关闭直播接口
     static function live($status)
     {
         $configs = self::readConfig()->configs;
@@ -166,7 +190,7 @@ class CommonUtils
         return self::send_get($urlPrefix . "&a=setting&direct_status=$status") == "successed";
     }
 
-    //提交资源平台
+//提交资源平台
     static function upload($video)
     {
         $configs = self::readConfig()->configs;

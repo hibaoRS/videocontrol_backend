@@ -65,7 +65,6 @@ class InteractUtils
             }
         }
 
-
         return true;
 
     }
