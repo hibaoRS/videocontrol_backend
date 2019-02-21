@@ -1083,7 +1083,11 @@ class main extends controller
             die(json_encode(Msg::failed("激活失败，激活码格式有误")));
         }
         $codePath = "./config/usedCodes.json";
-        $codes = json_decode(file_get_contents($codePath));
+        if (file_exists($codePath)) {
+            $codes = json_decode(file_get_contents($codePath));
+        } else {
+            $codes = array();
+        }
         if (in_array($activateCode, $codes)) {
             die(json_encode(Msg::failed("激活失败，该激活码已被使用过")));
         }
@@ -1094,6 +1098,9 @@ class main extends controller
             if ($time = $this->isActivate($activateCode)) {
                 $timePath = "./config/time.json";
                 $configTime = json_decode(file_get_contents($timePath));
+                if (!property_exists($configTime, "expiryTime")) {
+                    $configTime->expiryTime = 0;
+                }
                 if ($time == 99) {
                     $time = 10000;
                 }
@@ -1104,8 +1111,8 @@ class main extends controller
                 } //激活
                 else {
                     $configTime->expiryTime = $configTime->fakeTime + $addTime;
+                    $configTime->activateTime = $configTime->fakeTime;
                 }
-                $configTime->activateTime = $configTime->fakeTime;
                 file_put_contents($timePath, json_encode($configTime));
                 array_push($codes, $activateCode);
                 file_put_contents($codePath, json_encode($codes));
@@ -1163,7 +1170,17 @@ class main extends controller
 
     private function activateState()
     {
-        $configTime = json_decode(file_get_contents("./config/time.json"));
+        if (file_exists("./config/time.json")) {
+            $configTime = json_decode(file_get_contents("./config/time.json"));
+        } else {
+            $configTime = (object)array(
+                "trueTime" => 1545308939,
+                "fakeTime" => 1545308939,
+                "expiryTime" => null,
+                "activateTime" => null,
+            );
+            file_put_contents("./config/time.json", json_encode($configTime));
+        }
         return array(
             "activate" => $configTime->fakeTime < $configTime->expiryTime ? 1 : 0,
             "expiryTime" => $configTime->expiryTime,
@@ -1200,18 +1217,46 @@ class main extends controller
         $isTrueTime = $_REQUEST["isTrueTime"];
         $time = intval($_REQUEST["time"]);
         $timePath = "./config/time.json";
-        $configTime = json_decode(file_get_contents($timePath));
+        if (file_exists($timePath)) {
+            $configTime = json_decode(file_get_contents($timePath));
+        } else {
+            $configTime = (object)array(
+                "trueTime" => 1545308939,
+                "fakeTime" => 1545308939,
+                "expiryTime" => null,
+                "activateTime" => null,
+            );
+        }
+
+        //直接请求服务器时间
+        @file_get_contents(
+            "https://seeyouweb.com/time/getTime", false,
+            stream_context_create(array(
+                'http' => array(
+                    'timeout' => 1 //超时时间，单位为秒
+                )))
+        );
+        if (isset($http_response_header)) {
+            foreach ($http_response_header as $v) {
+                if (($pos = strpos($v, "Date:")) !== false) {
+                    $time = strtotime(substr($v, 5));
+                    $isTrueTime = true;
+                    break;
+                }
+            }
+        }
 
         if ($isTrueTime) {
             $configTime->trueTime = $time;
             $configTime->fakeTime = $time;
         } else {
             $oldTrueTime = $configTime->trueTime;
-            if ($time > $oldTrueTime && $time < ($oldTrueTime + 60 * 60 * 24 * 30 * 12)) {
+            if ($time > $oldTrueTime && $time > $configTime->fakeTime && $time < ($oldTrueTime + 60 * 60 * 24 * 30 * 12 * 10)) {
                 $configTime->fakeTime = $time;
             }
         }
         file_put_contents($timePath, json_encode($configTime));
+        echo json_encode(Msg::success());
     }
 
 

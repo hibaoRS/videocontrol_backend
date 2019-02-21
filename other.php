@@ -56,7 +56,7 @@ class other
 
 
         $output = "";
-        //获取网关p
+        //获取网关
         $output = shell_exec("ip route |grep default |grep '$dev'");
         if (!empty($output)) {
             $gateway = explode(" ", trim($output))[2];
@@ -72,6 +72,10 @@ class other
     }
 
 
+    /**ip去除0
+     * @param $ip
+     * @return string
+     */
     private function ipSubZero($ip)
     {
         $result = "";
@@ -138,7 +142,7 @@ class other
         $mask = $this->ipSubZero($mask);
         exec("ifconfig '$dev' '$ip' netmask '$mask'", $result, $code);
         if ($code != 0) {
-            die(json_encode(Msg::success("操作失败，请检查ip地址有误或子网掩码是否正确")));
+            die(json_encode(Msg::failed("操作失败，请检查ip地址有误或子网掩码是否正确")));
         }
 
         //设置默认网关
@@ -147,12 +151,12 @@ class other
             if (!empty($this->getIpInfo($dev)["gateway"])) {
                 exec("route delete default gw " . $this->getIpInfo($dev)["gateway"] . " '$dev'", $result, $code);
                 if ($code != 0) {
-                    die(json_encode(Msg::success("操作失败，请检查网关地址是否正确")));
+                    die(json_encode(Msg::failed("操作失败，请检查网关地址是否正确")));
                 }
             }
             exec("route add default gw '$gateway' '$dev'", $result, $code);
             if ($code != 0) {
-                die(json_encode(Msg::success("操作失败，请稍后再试或重启系统")));
+                die(json_encode(Msg::failed("操作失败，请稍后再试或重启系统")));
             }
         }
 
@@ -163,7 +167,8 @@ class other
         if ("eth0" == $dev) {
             $ips->eth0 = array(
                 "ip" => $ip,
-                "mask" => $mask
+                "mask" => $mask,
+                "gateway" => $gateway
             );
             for ($i = 0; $i <= 6; $i++) {
                 if ($i != 5) {
@@ -173,6 +178,7 @@ class other
         } else if ("eth1" == $dev) {
             $ips->eth1 = array(
                 "ip" => $ip,
+                "gateway" => $gateway,
                 "mask" => $mask
             );
             $i = 5;
@@ -212,8 +218,6 @@ class other
 
         }
     }
-
-
 }
 
 $other = new other();

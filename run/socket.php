@@ -24,11 +24,20 @@ error_reporting(0);
 //CommonUtils::writeConfig($allConfigs);
 
 //设置ip
-$runTimeConfig=CommonUtils::readConfig();
+$runTimeConfig = CommonUtils::readConfig();
 if (PHP_OS == "Linux") {
     foreach ($runTimeConfig->ips as $dev => $ipInfo) {
-//        echo "ifconfig '$dev' '$ipInfo->ip' netmask '$ipInfo->mask'";
+        //设置ip
         exec("ifconfig '$dev' '$ipInfo->ip' netmask '$ipInfo->mask'", $result, $code);
+        //设置默认网关
+        $gateway = $ipInfo->gateway;
+        if ($gateway != "无" && $gateway != "000.000.000.000") {
+            $gateway = CommonUtils::ipSubZero($gateway);
+            if (!empty(CommonUtils::getIpInfo($dev)["gateway"])) {
+                exec("route delete default gw " . CommonUtils::getIpInfo($dev)["gateway"] . " '$dev'", $result, $code);
+            }
+            exec("route add default gw '$gateway' '$dev'", $result, $code);
+        }
     }
 }
 

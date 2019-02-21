@@ -28,7 +28,9 @@ class InteractUtils
 
 
         if ($oldConfigs->video != $newConfigs->video) {
+
             $sendData = array("type" => "1", "video" => $newConfigs->video);
+            echo (json_encode($sendData));
             $response = self::socketSendAndRead($ip, $port, json_encode($sendData));
             if ($response == false || json_decode($response)->code != 1) {
                 return false;

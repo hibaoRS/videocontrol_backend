@@ -19,7 +19,6 @@ class manager extends controller
     {
         global $managerDao;
         $this->managerDao = $managerDao;
-
     }
 
 

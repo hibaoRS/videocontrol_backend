@@ -6,9 +6,9 @@
  * Time: 15:29
  */
 
-require_once  "../utils/controller.php";
-require_once  "../utils/CommonUtils.php";
-require_once  "../utils/InteractUtils.php";
+require_once "../utils/controller.php";
+require_once "../utils/CommonUtils.php";
+require_once "../utils/InteractUtils.php";
 
 class update extends controller
 {

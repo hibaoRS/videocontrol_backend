@@ -124,20 +124,20 @@ class CommonUtils
         return $result;
     }
 
-    private static function encode_url($url)
+    public static function encode_url($url)
     {
         $pos = strpos($url, "?");
-        if($pos===false){
-            return  $url;
+        if ($pos === false) {
+            return $url;
         }
-        $pos=$pos+1;
+        $pos = $pos + 1;
         $uri = substr($url, 0, $pos);
         $params = substr($url, $pos);
         $paramsArr = explode("&", $params);
         foreach ($paramsArr as $param) {
             if (trim($param) == "") continue;
             $keyPos = strpos($param, "=") + 1;
-            if ($keyPos!==false) {
+            if ($keyPos === false) {
                 $uri .= urlencode($param);
             } else {
                 $uri .= substr($param, 0, $keyPos) . urlencode(substr($param, $keyPos));
@@ -175,7 +175,7 @@ class CommonUtils
             return false;
         }
         return self::send_get($urlPrefix . "&a=setting&class_room_name=$liveConfig->class_room_name"
-                . "&ip_address=$liveConfig->ip_address&rtmp_direct_sending_address=$rtmpServer/0") == "successed";
+                . "&ip_address=$liveConfig->ip_address&rtmp_direct_sending_address=$rtmpServer") == "successed";
     }
 
 
@@ -207,6 +207,71 @@ class CommonUtils
             == "successed";
     }
 
+
+    //去除ip中多余的0
+    static function ipSubZero($ip)
+    {
+        $result = "";
+        $array = explode(".", $ip);
+
+        for ($j = 0; $j < sizeof($array); $j++) {
+            $item = $array[$j];
+            if (strlen($item) == 3) {
+                if ($item[0] == "0") {
+                    $item = substr($item, 1, 2);
+                    if ($item[0] == "0") {
+                        $item = substr($item, 1, 1);
+                    }
+                }
+            } else if (strlen($item) == 2) {
+                if ($item[0] == "0") {
+                    $item = substr($item, 1, 1);
+                }
+            }
+            $result .= $item;
+            if ($j != sizeof($array) - 1) {
+                $result .= ".";
+            }
+        }
+        return $result;
+
+    }
+
+
+    //获取设备ip信息
+    static function getIpInfo($dev)
+    {
+        $ip = "";
+        $mask = "";
+        $gateway = "";
+
+        //获取ip和子网掩码
+        $output = shell_exec("ip address show dev '$dev'|grep inet");
+        if (!empty($output)) {
+            $addressInfo = explode(" ", trim($output));
+            $ipMask = explode("/", $addressInfo[1]);
+            if (!empty($ipMask)) {
+                $ip = $ipMask[0];
+                $mask = long2ip(0xFFFFFFFF << intval(32 - $ipMask[1]));
+            }
+        }
+
+
+        $output = "";
+        //获取网关
+        $output = shell_exec("ip route |grep default |grep '$dev'");
+        if (!empty($output)) {
+            $gateway = explode(" ", trim($output))[2];
+        }
+
+        $info = array(
+            "ip" => $ip,
+            "mask" => $mask,
+            "gateway" => $gateway
+        );
+
+        return $info;
+    }
 
 }
 
