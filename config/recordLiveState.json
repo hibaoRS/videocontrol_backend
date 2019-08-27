@@ -1,1 +1,10 @@
-{"living":1,"recording":0,"autoSwitch":1,"recordTime":0,"liveTime":1541474857521,"lastPauseTime":0,"pausedTime":0,"pause":0}
+{
+  "living": 1,
+  "recording": 0,
+  "autoSwitch": 1,
+  "recordTime": 0,
+  "liveTime": 1541474857521,
+  "lastPauseTime": 0,
+  "pausedTime": 0,
+  "pause": 0
+}

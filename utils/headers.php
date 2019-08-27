@@ -13,8 +13,9 @@ require __DIR__ . "/../utils/Msg.php";
 
 header("Access-Control-Allow-Origin:" . (array_key_exists("HTTP_ORIGIN", $_SERVER) ? $_SERVER["HTTP_ORIGIN"] : "*"));
 header("Access-Control-Allow-Credentials:true");
-header("Access-Control-Allow-Headers:DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type");
-header('Content-type: application/json;charset=utf-8');
+header("Access-Control-Allow-Headers:DNT,x-ijt,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type");
+//header('Content-type: application/json;charset=utf-8');
+//header('Content-type: text/html;charset=utf-8');
 
 
 $action = null;

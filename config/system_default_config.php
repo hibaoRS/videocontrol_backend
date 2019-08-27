@@ -113,7 +113,12 @@ return array(
             "norm_type" => "1",
             "rc_type" => "0",
             "bitrate_type" => "2",
-            "adv7842_type" => "0"
+            "adv7842_type" => "0",
+            "record" => array(
+                "type" => "0",
+                "mode" => 0,
+                "mapping" => array(),
+            ),
         ),
 
         "serial" => array(

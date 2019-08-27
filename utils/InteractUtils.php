@@ -14,10 +14,17 @@ class InteractUtils
     //  /media/disk
     static function checkAndSendConfig($oldConfigs, $newConfigs)
     {
-
         $ip = CommonUtils::getSystemConfig()["ip"];
         $port = CommonUtils::getSystemConfig()["port"];
 
+        if ($oldConfigs->video->record != $newConfigs->video->record) {
+            if (!ApiUtils::change_main_screen($newConfigs->video->record)) {
+                return false;
+            }
+        }
+
+        //TODO 修改api
+        return true;
         if ($oldConfigs->audio != $newConfigs->audio) {
             $sendData = array("type" => "0", "audio" => $newConfigs->audio);
             $response = self::socketSendAndRead($ip, $port, json_encode($sendData));
@@ -30,7 +37,7 @@ class InteractUtils
         if ($oldConfigs->video != $newConfigs->video) {
 
             $sendData = array("type" => "1", "video" => $newConfigs->video);
-            echo (json_encode($sendData));
+            echo(json_encode($sendData));
             $response = self::socketSendAndRead($ip, $port, json_encode($sendData));
             if ($response == false || json_decode($response)->code != 1) {
                 return false;
@@ -74,6 +81,8 @@ class InteractUtils
 
     static function socketSendAndRead($ip, $port, $data)
     {
+        //TODO 处理
+        return false;
         //创建 TCP/IP socket
         if (($socket = @socket_create(AF_INET, SOCK_STREAM, SOL_TCP)) == false) {
             socket_close($socket);

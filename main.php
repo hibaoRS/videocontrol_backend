@@ -11,6 +11,7 @@ require "utils/CommonUtils.php";
 require "utils/Validator.php";
 require "utils/InteractUtils.php";
 require "utils/Des.php";
+require "utils/ApiUtils.php";
 
 
 class main extends controller
@@ -427,28 +428,9 @@ class main extends controller
 
         $state = InteractUtils::recordLiveState();
         if ($state->recording == 0) {
-
             $fp = fopen(__DIR__ . "/configLock", "w+");
             if (flock($fp, LOCK_EX | LOCK_NB)) {
-                $systemConfig = CommonUtils::getSystemConfig();
-                $path = $this->videoPath . date("Y-m-d", time()) . "/";
-                if (!file_exists($path)) {
-                    mkdir($path, 0777, true);
-                }
-                $save_path = $path . CommonUtils::readConfig()->recordName;
-                if (file_exists($save_path . $systemConfig["suffix"])) {
-                    $save_path = $save_path . "_" . date("Y_m_d_h_i_s", time()) . $systemConfig["suffix"];
-                } else {
-                    $save_path = $save_path . $systemConfig["suffix"];
-                }
-//            $save_path = "/nfsroot/1.mp4";
-
-                $data = array("type" => "7", "record" => array(
-                    "film_path" => $save_path,
-                    "segment_time" => strval(CommonUtils::readConfig()->sectionTime * 60)
-                ));
-                $response = InteractUtils::socketSendAndRead($this->ip, $this->port, json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
-                if (json_decode($response)->code == 1) {
+                if (ApiUtils::start_record()) {
                     //保存录制直播状态
                     CommonUtils::saveRecordLiveState(array(
                         "recording" => 1,
@@ -479,9 +461,7 @@ class main extends controller
         if ($state->recording == 1) {
             $fp = fopen(__DIR__ . "/configLock", "w+");
             if (flock($fp, LOCK_EX | LOCK_NB)) {
-                $data = array("type" => "8");
-                $response = InteractUtils::socketSendAndRead($this->ip, $this->port, json_encode($data));
-                if (json_decode($response)->code == 1) {
+                if (ApiUtils::stop_record()) {
                     //保存录制直播状态
                     CommonUtils::saveRecordLiveState(array(
                         "recording" => 0,
@@ -511,9 +491,7 @@ class main extends controller
         if ($state->living == 0) {
             $fp = fopen(__DIR__ . "/configLock", "w+");
             if (flock($fp, LOCK_EX | LOCK_NB)) {
-                $data = array("type" => "11");
-                $response = InteractUtils::socketSendAndRead($this->ip, $this->port, json_encode($data));
-                if (json_decode($response)->code == 1) {
+                if (ApiUtils::start_local_live()) {
                     //保存录制直播状态
                     CommonUtils::saveRecordLiveState(array(
                         "living" => 1,
@@ -541,9 +519,7 @@ class main extends controller
         if ($state->living == 1) {
             $fp = fopen(__DIR__ . "/configLock", "w+");
             if (flock($fp, LOCK_EX | LOCK_NB)) {
-                $data = array("type" => "12");
-                $response = InteractUtils::socketSendAndRead($this->ip, $this->port, json_encode($data));
-                if (json_decode($response)->code == 1) {
+                if (ApiUtils::stop_local_live()) {
                     //保存录制直播状态
                     CommonUtils::saveRecordLiveState(array(
                         "living" => 0
@@ -571,25 +547,20 @@ class main extends controller
 
             $fp = fopen(__DIR__ . "/configLock", "w+");
             if (flock($fp, LOCK_EX | LOCK_NB)) {
-                $data = array("type" => "5");
-                $response = InteractUtils::socketSendAndRead($this->ip, $this->port, json_encode($data));
-                if (json_decode($response)->code == 1) {
-                    //保存状态
-                    CommonUtils::saveRecordLiveState(array(
-                        "autoSwitch" => 0
-                    ));
-                    $allConfigs = CommonUtils::readConfig();
-                    $configs = $allConfigs->configs;
-                    $misc = $configs->misc;
-                    $misc->auto_switch = "0";
-                    $configs->misc = $misc;
-                    $allConfigs->configs = $configs;
-                    CommonUtils::writeConfig($allConfigs);
-                    CommonUtils::writeToSystem($allConfigs->configs);
-                    echo json_encode(Msg::success("操作成功"));
-                } else {
-                    echo json_encode(Msg::failed("操作失败，请稍后再试或重启系统"));
-                }
+                //保存状态
+                CommonUtils::saveRecordLiveState(array(
+                    "autoSwitch" => 0
+                ));
+                $allConfigs = CommonUtils::readConfig();
+                $configs = $allConfigs->configs;
+                $misc = $configs->misc;
+                $misc->auto_switch = "0";
+                $configs->misc = $misc;
+                $allConfigs->configs = $configs;
+                CommonUtils::writeConfig($allConfigs);
+                CommonUtils::writeToSystem($allConfigs->configs);
+                echo json_encode(Msg::success("操作成功"));
+
                 flock($fp, LOCK_UN);    // 释放锁定
             } else {
                 echo json_encode(Msg::failed("上次操作尚未完成，请稍后再试或重启设备"));
@@ -607,25 +578,19 @@ class main extends controller
 
             $fp = fopen(__DIR__ . "/configLock", "w+");
             if (flock($fp, LOCK_EX | LOCK_NB)) {
-                $data = array("type" => "4");
-                $response = InteractUtils::socketSendAndRead($this->ip, $this->port, json_encode($data));
-                if (json_decode($response)->code == 1) {
-                    //保存状态
-                    CommonUtils::saveRecordLiveState(array(
-                        "autoSwitch" => 1
-                    ));
-                    $allConfigs = CommonUtils::readConfig();
-                    $configs = $allConfigs->configs;
-                    $misc = $configs->misc;
-                    $misc->auto_switch = "1";
-                    $configs->misc = $misc;
-                    $allConfigs->configs = $configs;
-                    CommonUtils::writeConfig($allConfigs);
-                    CommonUtils::writeToSystem($allConfigs->configs);
-                    echo json_encode(Msg::success("操作成功"));
-                } else {
-                    echo json_encode(Msg::failed("操作失败，请稍后再试或重启系统"));
-                }
+                //保存状态
+                CommonUtils::saveRecordLiveState(array(
+                    "autoSwitch" => 1
+                ));
+                $allConfigs = CommonUtils::readConfig();
+                $configs = $allConfigs->configs;
+                $misc = $configs->misc;
+                $misc->auto_switch = "1";
+                $configs->misc = $misc;
+                $allConfigs->configs = $configs;
+                CommonUtils::writeConfig($allConfigs);
+                CommonUtils::writeToSystem($allConfigs->configs);
+                echo json_encode(Msg::success("操作成功"));
                 flock($fp, LOCK_UN);    // 释放锁定
             } else {
                 echo json_encode(Msg::failed("上次操作尚未完成，请稍后再试或重启设备"));
@@ -659,15 +624,7 @@ class main extends controller
                 ($chn != 5 && json_decode(file_get_contents(__DIR__ . "/run/signal_states.json"))->signal[$chn] == 255)) {
                 die(json_encode(Msg::failed("操作失败")));
             }
-
-            $response = InteractUtils::socketSendAndRead(
-                $this->ip,
-                $this->port,
-                json_encode(array(
-                    "type" => "6",
-                    "switch_chn" => array("chn" => $chn . "")
-                )));
-            if (json_decode($response)->code == 1) {
+            if (ApiUtils::switch_($chn)) {
                 echo json_encode(Msg::success("操作成功"));
             } else {
                 echo json_encode(Msg::failed("操作失败"));
@@ -1191,7 +1148,8 @@ class main extends controller
 
     private function getProductId()
     {
-//        return "3426d560-8832-4469-a70b-74d6a35245ce";
+        //TODO shell获取硬盘号
+        return "3426d560-8832-4469-a70b-74d6a35245ce";
         $response = InteractUtils::socketSendAndRead($this->ip, $this->port, json_encode(
             array(
                 "type" => "19"
