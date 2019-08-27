@@ -119,6 +119,14 @@ return array(
                 "mode" => 0,
                 "mapping" => array(),
             ),
+            "config" => array(
+                "normal_resolution" => "0",
+                "normal_bitrate" => "4000",
+                "resource_resolution" => "4",
+                "resource_bitrate" => "4000",
+                "live_resolution" => "4",
+                "live_bitrate" => "4000",
+            )
         ),
 
         "serial" => array(
@@ -132,6 +140,7 @@ return array(
             "board_port" => "5001",
             "rtmp" => "1",
             "auto_switch" => "1",
+            "resource_mode" => "0",
         ),
         "rtmp" => array(
             "server_url" => "rtmp://127.0.0.1/live",

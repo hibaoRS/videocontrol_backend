@@ -23,6 +23,18 @@ class InteractUtils
             }
         }
 
+        if ($oldConfigs->video->adv7842_type != $newConfigs->video->adv7842_type) {
+            if (!ApiUtils::change_pc_capture_mode($newConfigs->video->adv7842_type)) {
+                return false;
+            }
+        }
+
+        if ($oldConfigs->video->config != $newConfigs->video->config) {
+            if (!ApiUtils::change_video($newConfigs->video->config)) {
+                return false;
+            }
+        }
+
         //TODO 修改api
         return true;
         if ($oldConfigs->audio != $newConfigs->audio) {

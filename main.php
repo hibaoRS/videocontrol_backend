@@ -50,13 +50,13 @@ class main extends controller
 
     function getConfigOptions()
     {
-        $configOptions = require __DIR__ . "/config/configOptions.php";
+        $configOptions = CommonUtils::readConfigOptions();
         die(json_encode(Msg::success($configOptions)));
     }
 
     function getConfigOptionsInverse()
     {
-        $configOptions = require __DIR__ . "/config/configOptions.php";
+        $configOptions = CommonUtils::readConfigOptions();
         die(json_encode(Msg::success($this->inverseArray($configOptions)), JSON_FORCE_OBJECT));
     }
 
@@ -537,6 +537,30 @@ class main extends controller
         } else {
             echo json_encode(Msg::failed("操作失败，请刷新页面后再试"));
         }
+    }
+
+    function setResourceMode()
+    {
+        Validator::notEmpty(array("resource_mode"));
+        $allConfigs = CommonUtils::readConfig();
+        $allConfigs->configs->misc->resource_mode = $_REQUEST["resource_mode"];
+        CommonUtils::writeConfig($allConfigs);
+        echo json_encode(Msg::success("操作成功"));
+    }
+
+    function setRemoteLiving()
+    {
+        Validator::notEmpty(array("remoteLiving"));
+        $remoteLiving = $_REQUEST["remoteLiving"];
+        if ($remoteLiving) {
+            ApiUtils::start_remote_live();
+        } else {
+            ApiUtils::stop_remote_live();
+        }
+        CommonUtils::saveRecordLiveState(array(
+            "remote_living" => $remoteLiving,
+        ));
+        echo json_encode(Msg::success("操作成功"));
     }
 
 

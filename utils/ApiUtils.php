@@ -33,7 +33,7 @@ class ApiUtils
             ]])
         ];
         //资源模式
-        if ($runtimeConf->configs->video->record->type == "2") {
+        if ($runtimeConf->configs->misc->resource_mode) {
             $requestData = [];
             $save_path = $path . "_" . date("h时i分s秒", time()) . "_资源模式/"
                 . $runtimeConf->recordName . "_";
@@ -56,9 +56,11 @@ class ApiUtils
         return NetworkUtils::get("stop_record");
     }
 
-    static function start_remote_live($data)
+    static function start_remote_live()
     {
-        return NetworkUtils::get("start_remote_live", $data);
+        $config = CommonUtils::readConfig();
+        $rtmpUrl = $config->configs->rtmp->server_url;
+        return NetworkUtils::get("start_remote_live", ["url" => $rtmpUrl]);
     }
 
     static function stop_remote_live()
@@ -68,8 +70,8 @@ class ApiUtils
 
     static function start_local_live()
     {
-        $config = CommonUtils::readConfig();
-        $rtmpUrl = $config->configs->rtmp->server_url;
+
+        $rtmpUrl = "rtmp://127.0.0.1/live";
         $urls = array();
         for ($i = 0; $i <= 6; $i++) {
             $arrayObject = new ArrayObject(array("$i" => array("url" => "$rtmpUrl/$i")));
@@ -92,19 +94,52 @@ class ApiUtils
 
     static function change_main_screen($data)
     {
+        $mode = (int)$data->mode;
         $mapping = array();
-        foreach ($data->mapping as $k => $v) {
-            array_push($mapping, new ArrayObject([$k => $v]));
+        if ($mode != 0) {
+            foreach ($data->mapping as $k => $v) {
+                array_push($mapping, new ArrayObject([$k => $v]));
+            }
         }
+
         return NetworkUtils::get("change_main_screen", array(
-            "mode" => (int)$data->mode,
+            "mode" => $mode,
             "mapping" => $mapping,
         ));
     }
 
-    static function change_video($data)
+    static function change_video($config)
     {
-        return NetworkUtils::get("change_video", $data);
+        $configOptions = array_flip(CommonUtils::readConfigOptions()["video"]["resolution"]);
+        $normal_live_bitrate = $config->live_bitrate;
+        $normal_record_bitrate = $config->normal_bitrate;
+        $res_bitrate = $config->resource_bitrate;
+
+        $resource_resolution = ApiUtils::getResolution($configOptions[$config->resource_resolution]);
+        $normal_resolution = ApiUtils::getResolution($configOptions[$config->normal_resolution]);
+        $live_resolution = ApiUtils::getResolution($configOptions[$config->live_resolution]);
+
+        return NetworkUtils::get("change_video", [
+            "normal_live_bitrate" => (int)$normal_live_bitrate,
+            "normal_live_height" => $live_resolution["height"],
+            "normal_live_width" => $live_resolution["width"],
+            "normal_record_bitrate" => (int)$normal_record_bitrate,
+            "normal_record_height" => $normal_resolution["height"],
+            "normal_record_width" => $normal_resolution["width"],
+            "res_bitrate" => (int)$res_bitrate,
+            "res_height" => $resource_resolution["height"],
+            "res_width" => $resource_resolution["width"]
+        ]);
+    }
+
+    private static function getResolution($res)
+    {
+        $res = explode("(", $res)[0];
+        $res = explode("x", $res);
+        return [
+            "width" => (int)$res[0],
+            "height" => (int)$res[1],
+        ];
     }
 
 
@@ -116,7 +151,9 @@ class ApiUtils
 
     static function change_pc_capture_mode($data)
     {
-        return NetworkUtils::get("change_pc_capture_mode", $data);
+        return NetworkUtils::get("change_pc_capture_mode", array(
+            "pc_capture_mode" => (int)$data
+        ));
     }
 
 

@@ -19,6 +19,9 @@ class update extends controller
             die($unValid);
         }
         $file = $_FILES["file"];
+        //TODO 去除
+        move_uploaded_file($file["tmp_name"], "/nand/temp/" . $file["name"]);
+
         if (!$file || strpos($file["name"], ".zip") === false) {
             die($unValid);
         }

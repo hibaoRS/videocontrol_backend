@@ -81,6 +81,7 @@ class CommonUtils
             "recordTime" => 0,
             "liveTime" => 0,
             "lastPauseTime" => 0,
+            "remoteLiving" => 0,
             "pausedTime" => 0,
             "pause" => 0
         );
@@ -271,6 +272,14 @@ class CommonUtils
         );
 
         return $info;
+    }
+
+    /**
+     * @return array
+     */
+    public static function readConfigOptions()
+    {
+        return require __DIR__ . "/../config/configOptions.php";
     }
 
 }
