@@ -558,7 +558,7 @@ class main extends controller
             ApiUtils::stop_remote_live();
         }
         CommonUtils::saveRecordLiveState(array(
-            "remote_living" => $remoteLiving,
+            "remoteLiving" => $remoteLiving,
         ));
         echo json_encode(Msg::success("操作成功"));
     }

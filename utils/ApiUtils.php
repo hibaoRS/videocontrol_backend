@@ -98,8 +98,10 @@ class ApiUtils
         $mapping = array();
         if ($mode != 0) {
             foreach ($data->mapping as $k => $v) {
-                array_push($mapping, new ArrayObject([$k => $v]));
+                array_push($mapping, new ArrayObject([$k => (int)$v]));
             }
+        } else {
+            array_push($mapping, new ArrayObject(["0" => 6]));
         }
 
         return NetworkUtils::get("change_main_screen", array(
