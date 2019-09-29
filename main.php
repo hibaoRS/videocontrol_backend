@@ -283,6 +283,7 @@ class main extends controller
         }
 
         $fp = fopen(__DIR__ . "/configLock", "w+");
+
         if (flock($fp, LOCK_EX | LOCK_NB)) {
             Validator::notEmpty(array("configs"));
             $configs = json_decode($_REQUEST["configs"]);
@@ -710,13 +711,13 @@ class main extends controller
 
     function powerOff()
     {
-        InteractUtils::socketSendAndRead($this->ip, $this->port, json_encode(array("type" => "15")));
+        ApiUtils::shutdown();
         echo json_encode(Msg::success("操作成功"));
     }
 
     function reboot()
     {
-        InteractUtils::socketSendAndRead($this->ip, $this->port, json_encode(array("type" => "14")));
+        ApiUtils::reboot();
         echo json_encode(Msg::success("操作成功"));
     }
 
@@ -1007,17 +1008,8 @@ class main extends controller
     function cameraControl()
     {
         Validator::notEmpty(array("addr", "cmd", "value"));
-        $response = InteractUtils::socketSendAndRead($this->ip, $this->port, json_encode(
-            array(
-                "type" => "18",
-                "camera" => array(
-                    "addr" => strval($_REQUEST["addr"]),
-                    "cmd" => strval($_REQUEST["cmd"]),
-                    "value" => strval($_REQUEST["value"]),
-                )
-            )
-        ));
-        if (@json_decode($response)->code == 1) {
+
+        if (ApiUtils::camera_control($_REQUEST["addr"], $_REQUEST["cmd"], $_REQUEST["value"])) {
             echo json_encode(Msg::success("操作成功"));
         } else {
             echo json_encode(Msg::failed("操作失败，请稍后再试"));
@@ -1124,6 +1116,7 @@ class main extends controller
 
         $productId = $this->getProductId();
         $code = strtolower(md5(strtolower($salt1 . $productId)));
+        $code = strtolower(md5(strtolower($code)));
         $code = strtolower(md5(strtolower($code . $salt2)));
         $code = strtoupper(md5(strtoupper(substr_replace($code, $salt3, 16, 0))));
         $code = strtoupper(substr(md5($code), 8, 16));
@@ -1172,15 +1165,13 @@ class main extends controller
 
     private function getProductId()
     {
-        //TODO shell获取硬盘号
-        return "3426d560-8832-4469-a70b-74d6a35245ce";
-        $response = InteractUtils::socketSendAndRead($this->ip, $this->port, json_encode(
-            array(
-                "type" => "19"
-            )
-        ));
+        if (!CommonUtils::isLinux()) {
+            return "3426d560-8832-4469-a70b-74d6a35245ce";
+        }
+        $dev = trim(shell_exec("df|grep media/disk|awk {'print $1'}"));
+        $response = trim(shell_exec("blkid|grep '$dev'|awk -F '\\\"' {'print $2'}"));
         if ($response) {
-            return json_decode($response)->uuid;
+            return $response;
         } else {
             die(json_encode(Msg::failed("操作失败，请稍后再试")));
         }

@@ -175,6 +175,16 @@ return array(
                 "resource_platform_ip" => "58.67.222.35",
                 "resource_platform_port" => "8080",
             )
+        ),
+        "trace" => array(
+            "cmd" => array(
+                "bb_fea" => "FF 02 00 07 00 52 5B",
+                "pc_capture" => "FF 02 00 ff ff ff ff",
+                "stu_fea" => "FF 02 00 07 00 50 59",
+                "stu_full" => "FF 02 00 07 00 40 49",
+                "tea_fea" => "FF 02 00 07 00 51 5A",
+                "tea_full" => "FF 02 00 07 00 41 4A"
+            )
         )
     ),
 

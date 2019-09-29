@@ -32,6 +32,45 @@ class CommonUtils
      */
     static function writeConfig($config)
     {
+        if (is_object($config)) {
+            $oldConfig = CommonUtils::readConfig()->configs;
+            $newConfig = $config->configs;
+
+            $newMode = $newConfig->video->record->mode;
+            $oldMode = $oldConfig->video->record->mode;
+            $needUpdate1 = $newMode != $oldMode;
+            if ($needUpdate1) {
+                $newConfig->misc->resource_mode = $newMode == 0 ? '0' : '1';
+                if (CommonUtils::getRecordLiveState()->living == 1) {
+                    ApiUtils::stop_local_live();
+                    ApiUtils::start_local_live();
+                }
+            }
+
+            $newResourceMode = $newConfig->misc->resource_mode;
+            $oldResourceMode = $oldConfig->misc->resource_mode;
+            $needUpdate2 = $newResourceMode != $oldResourceMode;
+            if ($needUpdate2) {
+                if ($newResourceMode == 0) {
+                    $newConfig->video->record->mode = 0;
+                    $newConfig->video->record->type = 0;
+                } else {
+                    $newConfig->video->record->mode = 7;
+                    $newConfig->video->record->type = 2;
+                    $newConfig->video->record->mapping = new ArrayObject(array(
+                        0 => 0,
+                        1 => 1,
+                        2 => 2,
+                        3 => 3,
+                        4 => 4,
+                        5 => 5
+                    ));;
+                }
+            }
+
+
+        }
+
         $runtimeConfigPath = __DIR__ . "/../config/runtime_config.json";
         file_put_contents($runtimeConfigPath, json_encode($config));
     }
@@ -42,6 +81,12 @@ class CommonUtils
     static function readDefaultConfig()
     {
         return require __DIR__ . "/../config/system_default_config.php";
+    }
+
+
+    static function isLinux()
+    {
+        return PHP_OS == "Linux";
     }
 
 
@@ -119,7 +164,7 @@ class CommonUtils
 
     static function send_get($url)
     {
-        $curl = "export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/nand/lib;/nand/curl-7.61.1/arm/bin/curl ";
+        $curl = "export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/nand/lib;/nand/curl-7.61.1/arm/bin/curl --connect-timeout 3 -m 10 ";
         $url = self::encode_url($url);
         exec("$curl '$url'", $result, $code);
         return $result;

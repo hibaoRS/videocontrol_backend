@@ -126,7 +126,7 @@ class other
 
     function setIp()
     {
-        Validator::notEmpty( array("dev", "ip", "mask", "gateway"));
+        Validator::notEmpty(array("dev", "ip", "mask", "gateway"));
 
         $dev = $_REQUEST["dev"];
         $ip = $_REQUEST["ip"];
@@ -197,13 +197,13 @@ class other
     function setTime()
     {
 
-        Validator::notEmpty( array("datetime"));
+        Validator::notEmpty(array("datetime"));
         $datetime = $_REQUEST["datetime"];
         exec("date -s '$datetime'", $result, $code);
         if ($code != 0) {
             die(json_encode(Msg::failed("操作失败，请稍后再试或重启系统")));
         } else {
-            InteractUtils::socketSendAndRead($this->ip, $this->port, json_encode(array("type" => "13")));
+            ApiUtils::save_time();
             echo json_encode(Msg::success("操作成功"));
         }
     }
@@ -218,6 +218,23 @@ class other
 
         }
     }
+
+
+    function recordHostInfo()
+    {
+        $request = json_decode(file_get_contents("php://input"));
+        if ($request->type == 0) {
+            $signalObject = json_decode($request->msg);
+            $signal = array();
+            foreach ($signalObject as $k => $v) {
+                $signal[(int)$k] = $k->has_signal ? '6' : '255';
+            }
+            $saveJson = json_encode(array("signal" => $signal));
+            file_put_contents("./run/signal_states.json", $saveJson);
+        }
+
+    }
+
 }
 
 $other = new other();

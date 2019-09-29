@@ -28,14 +28,14 @@ class ApiUtils
         $requestData = [
             new ArrayObject(["7" => [
                 "filename" => $save_path,
-                "segment_duration" => 0,
-                "need_to_segment" => false,
+                "segment_duration" => 21600,
+                "need_to_segment" => true,
             ]])
         ];
         //资源模式
         if ($runtimeConf->configs->misc->resource_mode) {
             $requestData = [];
-            $save_path = $path . "_" . date("h时i分s秒", time()) . "_资源模式/"
+            $save_path = $path . "_" . date("h_i_s_", time()) . "_resource_mode/"
                 . $runtimeConf->recordName . "_";
             if (!file_exists($save_path)) {
                 mkdir($save_path, 0777, true);
@@ -43,8 +43,8 @@ class ApiUtils
             for ($i = 0; $i <= 6; $i++) {
                 array_push($requestData, new ArrayObject(["$i" => [
                     "filename" => $save_path . $i . $systemConfig["suffix"],
-                    "segment_duration" => 0,
-                    "need_to_segment" => false,
+                    "segment_duration" => 21600,
+                    "need_to_segment" => true,
                 ]]));
             }
         }
@@ -97,8 +97,22 @@ class ApiUtils
         $mode = (int)$data->mode;
         $mapping = array();
         if ($mode != 0) {
+            $i = 0;
+            $num = 0;
+            if ($mode == 2) $num = 2;
+            else if ($mode == 3) $num = 3;
+            else if ($mode == 4) $num = 4;
+            else if ($mode == 5) $num = 4;
+            else if ($mode == 6) $num = 5;
+            else if ($mode == 7) $num = 6;
+            else if ($mode == 8) $num = 6;
+
             foreach ($data->mapping as $k => $v) {
                 array_push($mapping, new ArrayObject([$k => (int)$v]));
+                $i++;
+                if ($i >= $num) {
+                    break;
+                }
             }
         } else {
             array_push($mapping, new ArrayObject(["0" => 6]));
@@ -156,6 +170,50 @@ class ApiUtils
         return NetworkUtils::get("change_pc_capture_mode", array(
             "pc_capture_mode" => (int)$data
         ));
+    }
+
+
+    static function camera_control($camera_addr, $cmd, $value)
+    {
+
+        return NetworkUtils::get("camera_control", array(
+            "camera_addr" => (int)$camera_addr,
+            "cmd" => (int)$cmd,
+            "value" => (int)$value,
+        ));
+    }
+
+
+    /**
+     * {
+     * "bb_fea": "FF 02 00 07 00 52 5B",
+     * "pc_capture": "FF 02 00 ff ff ff ff",
+     * "stu_fea": "FF 02 00 07 00 50 59",
+     * "stu_full": "FF 02 00 07 00 40 49",
+     * "tea_fea": "FF 02 00 07 00 51 5A",
+     * "tea_full": "FF 02 00 07 00 41 4A"
+     * }
+     */
+    static function change_switch_command($data)
+    {
+        return NetworkUtils::get("change_switch_command", $data);
+    }
+
+
+    static function shutdown()
+    {
+        return NetworkUtils::get("shutdown");
+    }
+
+    static function reboot()
+    {
+        return NetworkUtils::get("reboot");
+    }
+
+
+    static function save_time()
+    {
+        return NetworkUtils::get("save_time");
     }
 
 

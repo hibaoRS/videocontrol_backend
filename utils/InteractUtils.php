@@ -14,17 +14,23 @@ class InteractUtils
     //  /media/disk
     static function checkAndSendConfig($oldConfigs, $newConfigs)
     {
-        $ip = CommonUtils::getSystemConfig()["ip"];
-        $port = CommonUtils::getSystemConfig()["port"];
 
         if ($oldConfigs->video->record != $newConfigs->video->record) {
             if (!ApiUtils::change_main_screen($newConfigs->video->record)) {
                 return false;
             }
+
         }
 
         if ($oldConfigs->video->adv7842_type != $newConfigs->video->adv7842_type) {
             if (!ApiUtils::change_pc_capture_mode($newConfigs->video->adv7842_type)) {
+                return false;
+            }
+        }
+
+
+        if ($oldConfigs->trace->cmd != $newConfigs->trace->cmd) {
+            if (!ApiUtils::change_switch_command($newConfigs->trace->cmd)) {
                 return false;
             }
         }
@@ -35,56 +41,6 @@ class InteractUtils
             }
         }
 
-        //TODO 修改api
-        return true;
-        if ($oldConfigs->audio != $newConfigs->audio) {
-            $sendData = array("type" => "0", "audio" => $newConfigs->audio);
-            $response = self::socketSendAndRead($ip, $port, json_encode($sendData));
-            if ($response == false || json_decode($response)->code != 1) {
-                return false;
-            }
-        }
-
-
-        if ($oldConfigs->video != $newConfigs->video) {
-
-            $sendData = array("type" => "1", "video" => $newConfigs->video);
-            echo(json_encode($sendData));
-            $response = self::socketSendAndRead($ip, $port, json_encode($sendData));
-            if ($response == false || json_decode($response)->code != 1) {
-                return false;
-            }
-
-        }
-
-
-        if ($oldConfigs->rtmp != $newConfigs->rtmp) {
-            $sendData = array("type" => "2", "rtmp" => $newConfigs->rtmp);
-            $response = self::socketSendAndRead($ip, $port, json_encode($sendData));
-            if ($response == false || json_decode($response)->code != 1) {
-
-                return false;
-            }
-        }
-
-
-        if ($oldConfigs->serial != $newConfigs->serial) {
-            $sendData = array("type" => "3", "serial" => $newConfigs->serial);
-            $response = self::socketSendAndRead($ip, $port, json_encode($sendData));
-            if ($response == false || json_decode($response)->code != 1) {
-                return false;
-            }
-//            InteractUtils::socketSendAndRead($qt_ip, $qt_port, "sizeChange_".$newConfigs->system->display_mode);
-        }
-
-
-        if ($oldConfigs->main_screen != $newConfigs->main_screen) {
-            $sendData = array("type" => "16", "main_screen" => $newConfigs->main_screen);
-            $response = self::socketSendAndRead($ip, $port, json_encode($sendData));
-            if ($response == false || json_decode($response)->code != 1) {
-                return false;
-            }
-        }
 
         return true;
 
@@ -93,8 +49,6 @@ class InteractUtils
 
     static function socketSendAndRead($ip, $port, $data)
     {
-        //TODO 处理
-        return false;
         //创建 TCP/IP socket
         if (($socket = @socket_create(AF_INET, SOCK_STREAM, SOL_TCP)) == false) {
             socket_close($socket);

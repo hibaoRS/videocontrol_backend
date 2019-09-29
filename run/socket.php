@@ -50,6 +50,7 @@ CommonUtils::boot();
 file_put_contents(__DIR__ . "/../runtime/ftpFileName.txt", "");
 file_put_contents(__DIR__ . "/../runtime/ftpStatus.txt", "");
 
+return;
 
 $address = CommonUtils::getSystemConfig()["my_ip"];
 //$address = "192.168.1.101";
@@ -67,7 +68,6 @@ if (socket_bind($sock, $address, $port) === false) {
     echo "socket_bind() failed: reason: " . socket_strerror(socket_last_error($sock)) . "\r\n";
     return;
 }
-
 
 if (socket_listen($sock, 5) === false) {
     echo "socket_listen() failed: reason: " . socket_strerror(socket_last_error($sock)) . "\r\n";

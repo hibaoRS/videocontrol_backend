@@ -8,6 +8,8 @@
 
 require "utils/Validator.php";
 require "utils/controller.php";
+require "utils/CommonUtils.php";
+require "utils/ApiUtils.php";
 
 
 class manager extends controller
@@ -34,7 +36,7 @@ class manager extends controller
 
     function login()
     {
-        Validator::notEmpty( array("name", "password"));
+        Validator::notEmpty(array("name", "password"));
 
         if ($result = $this->managerDao->login($_REQUEST["name"], $_REQUEST["password"])) {
             $_SESSION["manager"] = $result;
@@ -42,6 +44,11 @@ class manager extends controller
                 setcookie("identity", md5(md5($result["name"])) . "_" . md5(md5($result["password"]))
                     , time() + 3600 * 24 * 30 * 12 * 5);
             }
+
+            if (CommonUtils::getRecordLiveState()->living == 1) {
+                ApiUtils::start_local_live();
+            }
+
             die(json_encode(Msg::success($result)));
         } else {
             die(json_encode(Msg::failed("管理员账号或密码有误")));
@@ -58,10 +65,10 @@ class manager extends controller
 
     function add()
     {
-        if($_SESSION["manager"]["type"]==0){
+        if ($_SESSION["manager"]["type"] == 0) {
             die(json_encode(Msg::failed("非法操作")));
         }
-        Validator::notEmpty( array("name", "password"));
+        Validator::notEmpty(array("name", "password"));
         if ($this->managerDao->exists($_REQUEST["name"])) {
             die(json_encode(Msg::failed("操作失败，该管理员已存在")));
         }
@@ -71,7 +78,7 @@ class manager extends controller
 
     function list()
     {
-        if($_SESSION["manager"]["type"]==0){
+        if ($_SESSION["manager"]["type"] == 0) {
             die(json_encode(Msg::failed("非法操作")));
         }
         die(json_encode(Msg::success($this->managerDao->list())));
@@ -80,9 +87,9 @@ class manager extends controller
 
     function delete()
     {
-        Validator::notEmpty( array("id"));
+        Validator::notEmpty(array("id"));
 
-        if($_SESSION["manager"]["type"]==0){
+        if ($_SESSION["manager"]["type"] == 0) {
             die(json_encode(Msg::failed("非法操作")));
         }
 
@@ -100,8 +107,8 @@ class manager extends controller
 
     function update()
     {
-        Validator::notEmpty( array("id", "name", "password"));
-        if(!key_exists("oldPassword",$_REQUEST)){
+        Validator::notEmpty(array("id", "name", "password"));
+        if (!key_exists("oldPassword", $_REQUEST)) {
             die(json_encode(Msg::failed("旧密码不能为空")));
         }
 
@@ -111,7 +118,7 @@ class manager extends controller
         $oldPassword = $_REQUEST["oldPassword"];
 
 
-        $admin = $this->managerDao->getByIdAndPassword($id,$oldPassword);
+        $admin = $this->managerDao->getByIdAndPassword($id, $oldPassword);
         if (!$admin) {
             die(json_encode(Msg::failed("旧密码有误")));
         }
