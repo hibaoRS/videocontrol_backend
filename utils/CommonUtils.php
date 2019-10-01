@@ -39,6 +39,7 @@ class CommonUtils
             $newMode = $newConfig->video->record->mode;
             $oldMode = $oldConfig->video->record->mode;
             $needUpdate1 = $newMode != $oldMode;
+            //设置中改变了模式
             if ($needUpdate1) {
                 $newConfig->misc->resource_mode = $newMode == 0 ? '0' : '1';
                 if (CommonUtils::getRecordLiveState()->living == 1) {
@@ -50,6 +51,7 @@ class CommonUtils
             $newResourceMode = $newConfig->misc->resource_mode;
             $oldResourceMode = $oldConfig->misc->resource_mode;
             $needUpdate2 = $newResourceMode != $oldResourceMode;
+            //主页中改变了模式
             if ($needUpdate2) {
                 if ($newResourceMode == 0) {
                     $newConfig->video->record->mode = 0;

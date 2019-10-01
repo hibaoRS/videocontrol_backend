@@ -1,0 +1,187 @@
+{
+  "layout": "layout_default",
+  "video_urls": {
+    "6": "http:\/\/192.168.1.223:8080\/live\/6.flv",
+    "5": "http:\/\/192.168.1.223:8080\/live\/5.flv",
+    "4": "http:\/\/192.168.1.223:8080\/live\/4.flv",
+    "3": "http:\/\/192.168.1.222:8080\/live\/3.flv",
+    "2": "http:\/\/192.168.1.222:8080\/live\/2.flv",
+    "1": "http:\/\/192.168.1.222:8080\/live\/1.flv",
+    "0": "http:\/\/192.168.1.222:8080\/live\/0.flv"
+  },
+  "recordName": "\u8bfe\u7a0b",
+  "sectionTime": 45,
+  "showAppManage": 0,
+  "showControlAppManage": 0,
+  "mainPanel": {
+    "enabled": 0,
+    "width": "35rem",
+    "height": "720px"
+  },
+  "standbyUrls": [],
+  "ips": {
+    "eth0": {
+      "ip": "192.168.1.222",
+      "gateway": "192.168.1.1",
+      "mask": "255.255.255.0"
+    },
+    "eth1": {
+      "ip": "192.168.1.223",
+      "gateway": "192.168.1.1",
+      "mask": "255.255.255.0"
+    }
+  },
+  "camera_control": {
+    "currCamera": "1",
+    "1": {
+      "focal_length": 0,
+      "zoom_speed": 2
+    },
+    "2": {
+      "focal_length": 0,
+      "zoom_speed": 2
+    },
+    "3": {
+      "focal_length": 0,
+      "zoom_speed": 2
+    },
+    "4": {
+      "focal_length": 0,
+      "zoom_speed": 2
+    },
+    "5": {
+      "focal_length": 0,
+      "zoom_speed": 2
+    },
+    "6": {
+      "focal_length": 0,
+      "zoom_speed": 2
+    }
+  },
+  "configs": {
+    "audio": {
+      "samplerate": "48000",
+      "channels": "2"
+    },
+    "video": {
+      "size_type": "0",
+      "norm_type": "1",
+      "rc_type": "0",
+      "bitrate_type": "2",
+      "adv7842_type": "0",
+      "record": {
+        "type": 2,
+        "mode": 7,
+        "mapping": {
+          "0": 0,
+          "1": 1,
+          "2": 2,
+          "3": 3,
+          "4": 4,
+          "5": 5
+        }
+      },
+      "config": {
+        "normal_resolution": "0",
+        "normal_bitrate": "4000",
+        "resource_resolution": "4",
+        "resource_bitrate": "4000",
+        "live_resolution": "4",
+        "live_bitrate": "4000"
+      }
+    },
+    "serial": {
+      "camera_serial_dev": "\/dev\/ttyUSB0",
+      "serial_dev": "\/dev\/ttyUSB1",
+      "bitrate_type": "1"
+    },
+    "misc": {
+      "app_port": "5000",
+      "board_port": "5001",
+      "rtmp": "1",
+      "auto_switch": "1",
+      "resource_mode": "1"
+    },
+    "rtmp": {
+      "server_url": "rtmp:\/\/127.0.0.1\/live",
+      "size_type": "4",
+      "bitrate_type": "1"
+    },
+    "main_screen": {
+      "size_type": "0"
+    },
+    "camera": {
+      "student_closeUp": "1",
+      "teacher_closeUp": "2",
+      "student_panorama": "3",
+      "teacher_panorama": "4",
+      "board_closeUp": "5",
+      "custom": "6"
+    },
+    "other": {
+      "ftp": {
+        "server": "ftp:\/\/58.67.222.35",
+        "port": "21",
+        "user": "vision_ftp",
+        "password": "vision_upload",
+        "on_demand_port": "8085"
+      },
+      "interact_live": {
+        "serial_number": "",
+        "class_room_name": "",
+        "ip_address": "",
+        "picAddress": "static\/video_cover_default.jpg",
+        "resource_platform_ip": "58.67.222.35",
+        "resource_platform_port": "8080"
+      },
+      "server_url": "rtmp:\/\/127.0.0.1\/live"
+    },
+    "trace": {
+      "cmd": {
+        "bb_fea": "FF 02 00 07 00 52 5B",
+        "pc_capture": "FF 02 00 ff ff ff ff",
+        "stu_fea": "FF 02 00 07 00 50 59",
+        "stu_full": "FF 02 00 07 00 40 49",
+        "tea_fea": "FF 02 00 07 00 51 5A",
+        "tea_full": "FF 02 00 07 00 41 4A"
+      }
+    },
+    "other1": {
+      "ftp": {
+        "server": "ftp:\/\/58.67.222.35",
+        "port": "21",
+        "user": "vision_ftp",
+        "password": "vision_upload",
+        "on_demand_port": "8085"
+      },
+      "interact_live": {
+        "serial_number": "",
+        "class_room_name": "",
+        "ip_address": "",
+        "picAddress": "static\/video_cover_default.jpg",
+        "resource_platform_ip": "58.67.222.35",
+        "resource_platform_port": "8080"
+      },
+      "server_url": "rtmp:\/\/127.0.0.1\/live"
+    },
+    "other2": {
+      "ftp": {
+        "server": "ftp:\/\/58.67.222.35",
+        "port": "21",
+        "user": "vision_ftp",
+        "password": "vision_upload",
+        "on_demand_port": "8085"
+      },
+      "interact_live": {
+        "serial_number": "",
+        "class_room_name": "",
+        "ip_address": "",
+        "picAddress": "static\/video_cover_default.jpg",
+        "resource_platform_ip": "58.67.222.35",
+        "resource_platform_port": "8080"
+      },
+      "server_url": "rtmp:\/\/127.0.0.1\/live"
+    },
+    "interact_config": "1"
+  }
+}

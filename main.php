@@ -546,6 +546,7 @@ class main extends controller
         $allConfigs = CommonUtils::readConfig();
         $allConfigs->configs->misc->resource_mode = $_REQUEST["resource_mode"];
         CommonUtils::writeConfig($allConfigs);
+        ApiUtils::change_main_screen($allConfigs->configs->video);
         echo json_encode(Msg::success("操作成功"));
     }
 
@@ -1282,7 +1283,7 @@ class main extends controller
         $ftpServer = str_replace("ftp://", "", strtolower($ftpConfig->server));
         $cmd = "$this->curl -I 'http://$ftpServer:$ftpConfig->on_demand_port/ftp/$serial_number/$path' -r 0-1 --connect-timeout $timeOut -m $timeOut";
         exec($cmd, $myTemp, $result);
-        if (!$result && !strstr($myTemp[0], "404")) {
+        if (!$result && array_key_exists(0, $myTemp) && !strstr($myTemp[0], "404")) {
             return true;
         }
         return false;

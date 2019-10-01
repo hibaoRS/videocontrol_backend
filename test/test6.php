@@ -7,4 +7,3 @@ $res = explode("x", $res);
 var_dump($res);
 
 
-echo json_encode(array("signal"=>[]));

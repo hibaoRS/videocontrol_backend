@@ -10,6 +10,7 @@ require "utils/headers.php";
 require "utils/CommonUtils.php";
 require "utils/Validator.php";
 require "utils/InteractUtils.php";
+require "utils/ApiUtils.php";
 
 class other
 {
@@ -224,16 +225,17 @@ class other
     {
         $request = json_decode(file_get_contents("php://input"));
         if ($request->type == 0) {
-            $signalObject = json_decode($request->msg);
+            $signalObject = json_decode($request->msg,JSON_OBJECT_AS_ARRAY);
             $signal = array();
             foreach ($signalObject as $k => $v) {
-                $signal[(int)$k] = $k->has_signal ? '6' : '255';
+                $signal[$k] = $v['has_signal'] ? '6' : '255';
             }
             $saveJson = json_encode(array("signal" => $signal));
             file_put_contents("./run/signal_states.json", $saveJson);
         }
-
     }
+
+
 
 }
 

@@ -20,8 +20,9 @@ class ApiUtils
         }
         $runtimeConf = CommonUtils::readConfig();
         $save_path = $path . "/" . $runtimeConf->recordName;
-        if (file_exists($save_path . $systemConfig["suffix"])) {
-            $save_path = $save_path . "_" . date("h时i分s秒", time()) . $systemConfig["suffix"];
+        if (file_exists($save_path . $systemConfig["suffix"])
+            || file_exists($save_path . "_0" . $systemConfig["suffix"])) {
+            $save_path = $save_path . "_" . date("h_i_s", time()) . $systemConfig["suffix"];
         } else {
             $save_path = $save_path . $systemConfig["suffix"];
         }
@@ -99,7 +100,8 @@ class ApiUtils
         if ($mode != 0) {
             $i = 0;
             $num = 0;
-            if ($mode == 2) $num = 2;
+            if ($mode == 1) $num = 2;
+            else if ($mode == 2) $num = 2;
             else if ($mode == 3) $num = 3;
             else if ($mode == 4) $num = 4;
             else if ($mode == 5) $num = 4;
