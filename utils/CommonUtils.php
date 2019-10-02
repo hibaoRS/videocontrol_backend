@@ -44,10 +44,7 @@ class CommonUtils
             //设置中改变了模式
             if ($needUpdate1) {
                 $newConfig->misc->resource_mode = $newMode == 0 ? '0' : '1';
-                if (CommonUtils::getRecordLiveState()->living == 1) {
-                    ApiUtils::stop_local_live();
-                    ApiUtils::start_local_live();
-                }
+                CommonUtils::rebootLive();
             }
 
             $newResourceMode = $newConfig->misc->resource_mode;
@@ -85,6 +82,15 @@ class CommonUtils
     static function readDefaultConfig()
     {
         return require __DIR__ . "/../config/system_default_config.php";
+    }
+
+    //重启直播
+    static function rebootLive()
+    {
+        if (CommonUtils::getRecordLiveState()->living == 1) {
+            ApiUtils::stop_local_live();
+            ApiUtils::start_local_live();
+        }
     }
 
 

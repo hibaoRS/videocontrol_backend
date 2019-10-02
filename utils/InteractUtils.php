@@ -6,6 +6,9 @@
  * Time: 23:41
  */
 
+require "ApiUtils.php";
+require "CommonUtils.php";
+
 
 class InteractUtils
 {
@@ -19,7 +22,6 @@ class InteractUtils
             if (!ApiUtils::change_main_screen($newConfigs->video->record)) {
                 return false;
             }
-
         }
 
         if ($oldConfigs->video->adv7842_type != $newConfigs->video->adv7842_type) {
@@ -39,6 +41,7 @@ class InteractUtils
             if (!ApiUtils::change_video($newConfigs->video->config)) {
                 return false;
             }
+            CommonUtils::rebootLive();
         }
 
 

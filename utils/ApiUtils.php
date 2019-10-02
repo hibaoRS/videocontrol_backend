@@ -22,7 +22,7 @@ class ApiUtils
         $save_path = $path . "/" . $runtimeConf->recordName;
         if (file_exists($save_path . $systemConfig["suffix"])
             || file_exists($save_path . "_0" . $systemConfig["suffix"])) {
-            $save_path = $save_path . "_" . date("h_i_s", time()) . $systemConfig["suffix"];
+            $save_path = $save_path . "_" . date("H_i_s", time()) . $systemConfig["suffix"];
         } else {
             $save_path = $save_path . $systemConfig["suffix"];
         }
@@ -36,7 +36,7 @@ class ApiUtils
         //资源模式
         if ($runtimeConf->configs->misc->resource_mode) {
             $requestData = [];
-            $save_path = $path . "_" . date("h_i_s_", time()) . "_resource_mode/"
+            $save_path = $path . "_" . date("H_i_s_", time()) . "_resource_mode/"
                 . $runtimeConf->recordName . "_";
             if (!file_exists($save_path)) {
                 mkdir($save_path, 0777, true);
@@ -141,9 +141,9 @@ class ApiUtils
         $normal_record_bitrate = $config->normal_bitrate;
         $res_bitrate = $config->resource_bitrate;
 
-        $resource_resolution = ApiUtils::getResolution($configOptions[$config->resource_resolution == '4' ? '5' : $config->resource_resolution]);
+        $resource_resolution = ApiUtils::getResolution($configOptions[$config->resource_resolution]);
         $normal_resolution = ApiUtils::getResolution($configOptions[$config->normal_resolution]);
-        $live_resolution = ApiUtils::getResolution($configOptions[$config->live_resolution == '4' ? '5' : $config->live_resolution]);
+        $live_resolution = ApiUtils::getResolution($configOptions[$config->live_resolution]);
 
         return NetworkUtils::get("change_video", [
             "normal_live_bitrate" => (int)$normal_live_bitrate,

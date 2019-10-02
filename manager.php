@@ -44,11 +44,7 @@ class manager extends controller
                 setcookie("identity", md5(md5($result["name"])) . "_" . md5(md5($result["password"]))
                     , time() + 3600 * 24 * 30 * 12 * 5);
             }
-
-            if (CommonUtils::getRecordLiveState()->living == 1) {
-                ApiUtils::start_local_live();
-            }
-
+            CommonUtils::rebootLive();
             die(json_encode(Msg::success($result)));
         } else {
             die(json_encode(Msg::failed("管理员账号或密码有误")));

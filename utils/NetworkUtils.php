@@ -9,7 +9,7 @@ class NetworkUtils
     static function get($url, $data = null)
     {
         //TODO 取消注释
-        return true;
+//        return true;
         $url = $GLOBALS["api"] . $url;
         $jsonData = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         $context = stream_context_create(array(
