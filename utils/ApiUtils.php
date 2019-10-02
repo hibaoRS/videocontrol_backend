@@ -41,12 +41,15 @@ class ApiUtils
             if (!file_exists($save_path)) {
                 mkdir($save_path, 0777, true);
             }
+            $record_route = $runtimeConf->configs->video->record->record_route;
             for ($i = 0; $i <= 6; $i++) {
-                array_push($requestData, new ArrayObject(["$i" => [
-                    "filename" => $save_path . $i . $systemConfig["suffix"],
-                    "segment_duration" => 21600,
-                    "need_to_segment" => true,
-                ]]));
+                if (in_array($i, $record_route)) {
+                    array_push($requestData, new ArrayObject(["$i" => [
+                        "filename" => $save_path . $i . $systemConfig["suffix"],
+                        "segment_duration" => 21600,
+                        "need_to_segment" => true,
+                    ]]));
+                }
             }
         }
         return NetworkUtils::get("start_record", $requestData);
@@ -62,6 +65,11 @@ class ApiUtils
         $config = CommonUtils::readConfig();
         $rtmpUrl = $config->configs->rtmp->server_url;
         return NetworkUtils::get("start_remote_live", ["url" => $rtmpUrl]);
+    }
+
+    static function change_record_mode($switch)
+    {
+        return NetworkUtils::get("change_record_mode", ["is_resource_mode" => $switch ? true : false]);
     }
 
     static function stop_remote_live()
@@ -133,9 +141,9 @@ class ApiUtils
         $normal_record_bitrate = $config->normal_bitrate;
         $res_bitrate = $config->resource_bitrate;
 
-        $resource_resolution = ApiUtils::getResolution($configOptions[$config->resource_resolution]);
+        $resource_resolution = ApiUtils::getResolution($configOptions[$config->resource_resolution == '4' ? '5' : $config->resource_resolution]);
         $normal_resolution = ApiUtils::getResolution($configOptions[$config->normal_resolution]);
-        $live_resolution = ApiUtils::getResolution($configOptions[$config->live_resolution]);
+        $live_resolution = ApiUtils::getResolution($configOptions[$config->live_resolution == '4' ? '5' : $config->live_resolution]);
 
         return NetworkUtils::get("change_video", [
             "normal_live_bitrate" => (int)$normal_live_bitrate,

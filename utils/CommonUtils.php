@@ -32,7 +32,9 @@ class CommonUtils
      */
     static function writeConfig($config)
     {
-        if (is_object($config)) {
+        if (false) {
+            //资源模式录制和叠加同步
+//        if (is_object($config)) {
             $oldConfig = CommonUtils::readConfig()->configs;
             $newConfig = $config->configs;
 

@@ -544,10 +544,14 @@ class main extends controller
     {
         Validator::notEmpty(array("resource_mode"));
         $allConfigs = CommonUtils::readConfig();
-        $allConfigs->configs->misc->resource_mode = $_REQUEST["resource_mode"];
-        CommonUtils::writeConfig($allConfigs);
-        ApiUtils::change_main_screen($allConfigs->configs->video);
-        echo json_encode(Msg::success("操作成功"));
+        $switch = $_REQUEST["resource_mode"];
+        if (ApiUtils::change_record_mode($switch)) {
+            $allConfigs->configs->misc->resource_mode = $switch;
+            CommonUtils::writeConfig($allConfigs);
+            echo json_encode(Msg::success("操作成功"));
+        } else {
+            echo json_encode(Msg::failed("操作失败，请刷新页面后再试"));
+        }
     }
 
     function setRemoteLiving()
@@ -977,13 +981,12 @@ class main extends controller
         if ($_SESSION["manager"]["type"] != 1) {
             die(json_encode(Msg::failed("非法操作")));
         } else {
-
             $state = InteractUtils::recordLiveState();
             if ($state->recording == 1) {
                 die(json_encode(Msg::failed("操作失败，在格式化硬盘之前，请先停止录制")));
             }
-            $response = InteractUtils::socketSendAndRead($this->ip, $this->port, json_encode(array("type" => "17")));
-            if (json_decode($response)->code == 1) {
+            exec("rm /media/disk/* -rf", $result, $code);
+            if ($code == 0) {
                 echo json_encode(Msg::success("操作成功"));
             } else {
                 echo json_encode(Msg::failed("操作失败，请稍后再试"));

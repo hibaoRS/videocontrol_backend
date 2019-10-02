@@ -19,15 +19,15 @@ for ($i = 6; $i >= 0; $i--) {
 }
 
 
-$response = InteractUtils::socketSendAndRead(CommonUtils::getSystemConfig()["ip"], CommonUtils::getSystemConfig()["port"], json_encode(
-    array(
-        "type" => "19"
-    )
-));
-$productId = "";
-if ($response) {
-    $productId = json_decode($response)->uuid;
-}
+//$response = InteractUtils::socketSendAndRead(CommonUtils::getSystemConfig()["ip"], CommonUtils::getSystemConfig()["port"], json_encode(
+//    array(
+//        "type" => "19"
+//    )
+//));
+//$productId = "";
+//if ($response) {
+//    $productId = json_decode($response)->uuid;
+//}
 
 return array(
     //当前布局
@@ -118,6 +118,7 @@ return array(
                 "type" => "0",
                 "mode" => 0,
                 "mapping" => array(),
+                'record_route' => [0, 1, 2, 3]
             ),
             "config" => array(
                 "normal_resolution" => "0",
